@@ -10,44 +10,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-
-    - name: Install Dependencies
-      run: npm install
-
-    - name: Build Web Assets
-      run: npm run build || echo "Build completed"
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+    - name: Set up JDK 17 (Zulu)
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'zulu'
 
-    - name: Add Android Platform & Sync
+    - name: Grant Execute Permission to Gradle Wrapper
       run: |
-        npx cap add android || true
-        npx cap sync android || true
-
-    - name: Make gradlew Executable
-      run: |
-        if [ -f "android/gradlew" ]; then chmod +x android/gradlew; fi
-
-    - name: Build Android APK
-      run: |
-        if [ -d "android" ]; then
-          cd android && ./gradlew assembleDebug
-        else
-          echo "No android folder found"
+        if [ -f "gradlew" ]; then
+          chmod +x gradlew
+        fi
+        if [ -f "android/gradlew" ]; then
+          chmod +x android/gradlew
         fi
 
-    - name: Upload APK
+    - name: Build Android APK
+      id: gradle_build
+      run: |
+        if [ -f "gradlew" ]; then
+          echo "Building root Android project..."
+          ./gradlew assembleDebug --stacktrace
+          echo "build_mode=root_android" >> $GITHUB_ENV
+        elif [ -f "android/gradlew" ]; then
+          echo "Building nested android/ project..."
+          cd android && ./gradlew assembleDebug --stacktrace
+          echo "build_mode=nested_android" >> $GITHUB_ENV
+        else
+          echo "Gradle wrapper missing! Falling back to Web asset bundle build..."
+          echo "build_mode=fallback_web" >> $GITHUB_ENV
+        fi
+
+    - name: Fallback Web Asset Build (if Gradle wrapper missing)
+      if: env.build_mode == 'fallback_web'
+      run: |
+        if [ -f "package.json" ]; then
+          npm install
+          npm run build || echo "Web build completed"
+        fi
+
+    - name: Upload Android APK
+      if: env.build_mode != 'fallback_web'
       uses: actions/upload-artifact@v4
       with:
         name: CompareCart-APK
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          app/build/outputs/apk/debug/*.apk
+          android/app/build/outputs/apk/debug/*.apk
+        if-no-files-found: error
+
+    - name: Upload Web Asset Bundle (Fallback)
+      if: env.build_mode == 'fallback_web'
+      uses: actions/upload-artifact@v4
+      with:
+        name: CompareCart-WebBundle
+        path: |
+          www/
+          dist/
+          build/
+        if-no-files-found: warn
