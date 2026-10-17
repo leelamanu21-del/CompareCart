@@ -71,14 +71,14 @@ fun AffiliateInfoScreen(
     )
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = BackgroundWhite,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "Master Aggregator (Cuelinks v3)",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = TextDark,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -87,11 +87,11 @@ fun AffiliateInfoScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextPrimary
+                            tint = TextDark
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceWhite)
             )
         }
     ) { paddingValues ->

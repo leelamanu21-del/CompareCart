@@ -45,10 +45,12 @@ fun AiVoiceSearchSheet(
 
     val sampleQueries = listOf(
         "50,000 ke andar best camera phone",
-        "sasta laptop for coding",
-        "air conditioner 1.5 ton 5 star",
-        "sabse sasta iphone",
-        "sony headphones best deal"
+        "Puma sneakers under 2000",
+        "Daawat biryani basmati rice 5kg offer",
+        "Prestige 3 litre pressure cooker best price",
+        "Atomic Habits book lowest price",
+        "The Derma Co vitamin c serum deal",
+        "Dettol handwash 1.5L refill best discount"
     )
 
     ModalBottomSheet(

@@ -53,14 +53,20 @@ fun ProductDetailScreen(
     }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = BackgroundWhite,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = SurfaceWhite,
+                    navigationIconContentColor = TextDark,
+                    titleContentColor = TextDark,
+                    actionIconContentColor = TextDark
+                ),
                 title = {
                     Text(
                         text = product.brand,
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = TextDark,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -69,7 +75,7 @@ fun ProductDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextPrimary
+                            tint = TextDark
                         )
                     }
                 },
@@ -82,7 +88,7 @@ fun ProductDetailScreen(
                         Icon(
                             imageVector = Icons.Default.NotificationsActive,
                             contentDescription = "Set Price Alert",
-                            tint = BrandCyan
+                            tint = AmazonTeal
                         )
                     }
 
@@ -99,11 +105,10 @@ fun ProductDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = "Share",
-                            tint = TextSecondary
+                            tint = TextMutedGrey
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark)
+                }
             )
         }
     ) { paddingValues ->
@@ -117,9 +122,9 @@ fun ProductDetailScreen(
             // Hero Image & Badges
             item {
                 Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderLight)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -144,7 +149,7 @@ fun ProductDetailScreen(
                         Text(
                             text = product.title,
                             style = MaterialTheme.typography.titleLarge,
-                            color = TextPrimary,
+                            color = TextDark,
                             fontWeight = FontWeight.Bold
                         )
 
@@ -163,14 +168,14 @@ fun ProductDetailScreen(
                             Text(
                                 text = "${product.rating} / 5",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = TextPrimary,
+                                color = TextDark,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "(${product.reviewCount} customer reviews)",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary
+                                color = TextMutedGrey
                             )
                         }
 
@@ -249,16 +254,16 @@ fun ProductDetailScreen(
             // 6. Key Specifications
             item {
                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderLight)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Key Specifications",
                             style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
+                            color = TextDark,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -272,13 +277,13 @@ fun ProductDetailScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(6.dp)
-                                        .background(BrandCyan, CircleShape)
+                                        .background(AmazonTeal, CircleShape)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = spec,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextPrimary
+                                    color = TextDark
                                 )
                             }
                         }

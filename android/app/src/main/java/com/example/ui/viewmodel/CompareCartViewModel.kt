@@ -13,7 +13,10 @@ import com.example.data.remote.CuelinksAffiliateManager
 import com.example.data.remote.GeminiHinglishAdvisor
 import com.example.data.repository.PriceAlertRepository
 import com.example.data.repository.ProductRepository
+import com.example.data.repository.UniversalProductCatalog
 import com.example.data.repository.UserCardRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -30,6 +33,8 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
     private val productRepo = ProductRepository()
     private val cardRepo = UserCardRepository(db.userCardDao())
     private val alertRepo = PriceAlertRepository(db.priceAlertDao())
+
+    private var searchJob: Job? = null
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -48,6 +53,12 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _aiAdviceMessage = MutableStateFlow<String?>(null)
     val aiAdviceMessage = _aiAdviceMessage.asStateFlow()
+
+    private val _isLiveSearching = MutableStateFlow(false)
+    val isLiveSearching = _isLiveSearching.asStateFlow()
+
+    private val _liveSearchStatus = MutableStateFlow<String?>(null)
+    val liveSearchStatus = _liveSearchStatus.asStateFlow()
 
     private val _conversionDialogState = MutableStateFlow<ConversionDialogState?>(null)
     val conversionDialogState = _conversionDialogState.asStateFlow()
@@ -90,7 +101,7 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
 
             matchQuery && matchCat && matchAsli && matchBuy
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProductRepository.getSeedProducts())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UniversalProductCatalog.getAllUniversalProducts())
 
     init {
         viewModelScope.launch {
@@ -102,11 +113,53 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
         _searchQuery.value = query
         if (query.isBlank()) {
             _aiAdviceMessage.value = null
+            _liveSearchStatus.value = null
+            _isLiveSearching.value = false
+            searchJob?.cancel()
+            return
+        }
+
+        // Trigger dynamic live multi-store fetching with 600ms debounce
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(600)
+            if (query.trim().length >= 2) {
+                performDynamicLiveFetch(query.trim(), _selectedCategory.value)
+            }
         }
     }
 
     fun onCategorySelected(category: String) {
         _selectedCategory.value = category
+        if (_searchQuery.value.isNotBlank()) {
+            performDynamicLiveFetch(_searchQuery.value.trim(), category)
+        }
+    }
+
+    fun triggerExplicitLiveSearch() {
+        val q = _searchQuery.value.trim()
+        if (q.isNotBlank()) {
+            performDynamicLiveFetch(q, _selectedCategory.value)
+        }
+    }
+
+    private fun performDynamicLiveFetch(query: String, category: String) {
+        viewModelScope.launch {
+            _isLiveSearching.value = true
+            _liveSearchStatus.value = "Fetching live comparisons across Amazon, Flipkart, JioMart & Myntra..."
+            try {
+                val liveItems = productRepo.searchLiveAndCached(query, category)
+                if (liveItems.isNotEmpty()) {
+                    _liveSearchStatus.value = "Live prices synced from 5+ merchants for \"$query\""
+                } else {
+                    _liveSearchStatus.value = null
+                }
+            } catch (e: Exception) {
+                _liveSearchStatus.value = null
+            } finally {
+                _isLiveSearching.value = false
+            }
+        }
     }
 
     fun toggleAsliDiscountFilter() {
@@ -175,6 +228,7 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
                 _selectedCategory.value = result.category
             }
             _aiAdviceMessage.value = result.userSummaryAdvice
+            performDynamicLiveFetch(queryText, result.category ?: _selectedCategory.value)
         }
     }
 

@@ -37,14 +37,14 @@ fun MyCardsScreen(
     var showAddCardDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = BackgroundWhite,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "My Bank Cards",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = TextDark,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -53,7 +53,7 @@ fun MyCardsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextPrimary
+                            tint = TextDark
                         )
                     }
                 },
@@ -65,11 +65,11 @@ fun MyCardsScreen(
                         Icon(
                             imageVector = Icons.Default.AddCard,
                             contentDescription = "Add Card",
-                            tint = BrandCyan
+                            tint = AmazonTeal
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceWhite)
             )
         }
     ) { paddingValues ->

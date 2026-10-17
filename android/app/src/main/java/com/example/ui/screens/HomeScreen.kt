@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,6 +52,8 @@ fun HomeScreen(
     val userCards by viewModel.userCards.collectAsState()
     val activeBankNames by viewModel.activeBankNames.collectAsState()
     val aiAdviceMessage by viewModel.aiAdviceMessage.collectAsState()
+    val isLiveSearching by viewModel.isLiveSearching.collectAsState()
+    val liveSearchStatus by viewModel.liveSearchStatus.collectAsState()
 
     var showVoiceSheet by remember { mutableStateOf(false) }
 
@@ -58,7 +61,17 @@ fun HomeScreen(
         NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply { maximumFractionDigits = 0 }
     }
 
-    val categories = listOf("All", "Smartphones", "Laptops", "Audio", "Appliances")
+    // Comprehensive universal product categories
+    val categories = listOf(
+        "All",
+        "Fashion",
+        "Home & Kitchen",
+        "Groceries",
+        "Beauty",
+        "Books",
+        "Daily Essentials",
+        "Electronics"
+    )
 
     Scaffold(
         containerColor = BackgroundDark,
@@ -107,11 +120,11 @@ fun HomeScreen(
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "Sirf Sasta Nahi, Sabse Sahi",
+                                text = "Universal Indian E-Commerce Comparison",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = BrandCyan,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
+                                fontSize = 9.sp
                             )
                         }
                     }
@@ -143,7 +156,7 @@ fun HomeScreen(
                     }
                 }
 
-                // Search Bar with Mic Button
+                // Search Bar with Live Search & Mic Button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -164,21 +177,27 @@ fun HomeScreen(
                                 .padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            IconButton(
+                                onClick = { viewModel.triggerExplicitLiveSearch() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                    tint = BrandCyan,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.width(8.dp))
                             TextField(
                                 value = searchQuery,
                                 onValueChange = { viewModel.onSearchQueryChanged(it) },
                                 placeholder = {
                                     Text(
-                                        "Search phones, laptops, deals...",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = TextMuted
+                                        "Search any product (Groceries, Fashion, Books...)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextMuted,
+                                        fontSize = 12.sp
                                     )
                                 },
                                 singleLine = true,
@@ -225,6 +244,53 @@ fun HomeScreen(
                             contentDescription = "AI Voice Search",
                             tint = Color.White,
                             modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
+                // Live Search Progress indicator
+                AnimatedVisibility(visible = isLiveSearching) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                    ) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp),
+                            color = BrandCyan,
+                            trackColor = SurfaceVariantDark
+                        )
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "⚡ Fetching live prices from Amazon, Flipkart, JioMart & Myntra...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BrandCyan,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+
+                // Live search status notification banner
+                if (liveSearchStatus != null && !isLiveSearching) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = AsliGreen, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = liveSearchStatus!!,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AsliGreen,
+                            fontSize = 10.sp
                         )
                     }
                 }
@@ -380,7 +446,7 @@ fun HomeScreen(
                             color = TextSecondary
                         )
                         Text(
-                            text = "Try adjusting your query or resetting filters",
+                            text = "Try searching for fashion, groceries, kitchen or books",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextMuted
                         )
@@ -438,33 +504,45 @@ fun ProductCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Quality / Scam Guard Badge
-                val topBadge = product.badges.firstOrNull()
-                if (topBadge != null) {
+                // Category Tag + Quality Badge
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = if (topBadge.isWarning) FakeWarningContainer else AsliGreenContainer,
-                        modifier = Modifier.border(
-                            1.dp,
-                            if (topBadge.isWarning) FakeWarningOrange else AsliGreen,
-                            RoundedCornerShape(6.dp)
-                        )
+                        shape = RoundedCornerShape(4.dp),
+                        color = SurfaceVariantDark
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Text(
+                            text = product.category.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BrandCyan,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    val topBadge = product.badges.firstOrNull()
+                    if (topBadge != null) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = if (topBadge.isWarning) FakeWarningContainer else AsliGreenContainer,
+                            modifier = Modifier.border(
+                                1.dp,
+                                if (topBadge.isWarning) FakeWarningOrange else AsliGreen,
+                                RoundedCornerShape(4.dp)
+                            )
                         ) {
                             Text(
                                 text = if (topBadge.isWarning) "⚠️ ${topBadge.title}" else "✓ ${topBadge.title}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (topBadge.isWarning) FakeWarningOrange else AsliGreen,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
+                                fontSize = 9.sp,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
                 }
 
                 // Buy vs Wait Pill

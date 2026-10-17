@@ -47,14 +47,14 @@ fun PriceAlertsScreen(
     var simulatedNotification by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = BackgroundWhite,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = "Price Drop Alerts",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
+                        color = TextDark,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -63,11 +63,11 @@ fun PriceAlertsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextPrimary
+                            tint = TextDark
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceWhite)
             )
         }
     ) { paddingValues ->
@@ -107,9 +107,9 @@ fun PriceAlertsScreen(
 
             item {
                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderLight)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -117,22 +117,22 @@ fun PriceAlertsScreen(
                             Icon(
                                 imageVector = Icons.Default.TrendingDown,
                                 contentDescription = null,
-                                tint = BrandCyan,
+                                tint = AmazonTeal,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Real-Time Merchant Price Watch",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = TextPrimary,
+                                color = TextDark,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "CompareCart monitors Amazon, Flipkart, Croma, and Reliance Digital. When any verified seller breaches your target price, an instant push alert is delivered.",
+                            text = "CompareCart monitors Amazon, Flipkart, Myntra, and JioMart. When any verified seller breaches your target price, an instant push alert is delivered.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
+                            color = TextMutedGrey,
                             lineHeight = 18.sp
                         )
                     }
@@ -169,9 +169,9 @@ fun PriceAlertsScreen(
             } else {
                 items(alerts, key = { it.id }) { alert ->
                     Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-                        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderLight)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -181,8 +181,8 @@ fun PriceAlertsScreen(
                                     contentDescription = alert.productTitle,
                                     modifier = Modifier
                                         .size(64.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(SurfaceDark),
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(SurfaceLightGrey),
                                     contentScale = ContentScale.Crop
                                 )
 
@@ -192,7 +192,7 @@ fun PriceAlertsScreen(
                                     Text(
                                         text = alert.productTitle,
                                         style = MaterialTheme.typography.titleSmall,
-                                        color = TextPrimary,
+                                        color = TextDark,
                                         fontWeight = FontWeight.Bold,
                                         maxLines = 2
                                     )

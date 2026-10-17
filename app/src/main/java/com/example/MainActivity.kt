@@ -2,25 +2,30 @@ package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import com.example.data.model.Product
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.data.repository.ProductRepository
 import com.example.ui.screens.*
 import com.example.ui.theme.*
@@ -28,6 +33,10 @@ import com.example.ui.viewmodel.CompareCartViewModel
 
 enum class Screen {
     HOME,
+    EXPLORE,
+    DEALS,
+    SAVED_ALERTS,
+    ACCOUNT,
     PRODUCT_DETAIL,
     MY_CARDS,
     PRICE_ALERTS,
@@ -49,70 +58,98 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     bottomBar = {
-                        // Show bottom navigation on primary screens
-                        if (currentScreen != Screen.PRODUCT_DETAIL) {
+                        // Show Amazon-style 5 standard navigation tabs on main screens
+                        val isMainScreen = currentScreen in listOf(
+                            Screen.HOME,
+                            Screen.EXPLORE,
+                            Screen.DEALS,
+                            Screen.SAVED_ALERTS,
+                            Screen.ACCOUNT
+                        )
+
+                        if (isMainScreen) {
                             NavigationBar(
-                                containerColor = SurfaceDark,
-                                contentColor = TextPrimary,
+                                containerColor = SurfaceWhite,
+                                contentColor = TextDark,
+                                tonalElevation = 8.dp,
                                 modifier = Modifier
                                     .windowInsetsPadding(WindowInsets.navigationBars)
                                     .testTag("main_bottom_nav")
                             ) {
+                                // 1. Home Tab
                                 NavigationBarItem(
                                     selected = currentScreen == Screen.HOME,
                                     onClick = { currentScreen = Screen.HOME },
-                                    icon = { Icon(Icons.Default.Storefront, contentDescription = "Deals") },
-                                    label = { Text("Compare") },
+                                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                                    label = { Text("Home", fontSize = 11.sp) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = BackgroundDark,
-                                        selectedTextColor = BrandCyan,
-                                        indicatorColor = BrandCyan,
-                                        unselectedIconColor = TextSecondary,
-                                        unselectedTextColor = TextSecondary
+                                        selectedIconColor = AmazonTeal,
+                                        selectedTextColor = AmazonTeal,
+                                        indicatorColor = AsliGreenContainer,
+                                        unselectedIconColor = TextMutedGrey,
+                                        unselectedTextColor = TextMutedGrey
                                     )
                                 )
 
+                                // 2. Explore Tab (Categories)
                                 NavigationBarItem(
-                                    selected = currentScreen == Screen.MY_CARDS,
-                                    onClick = { currentScreen = Screen.MY_CARDS },
-                                    icon = { Icon(Icons.Default.CreditCard, contentDescription = "My Cards") },
-                                    label = { Text("My Cards") },
+                                    selected = currentScreen == Screen.EXPLORE,
+                                    onClick = { currentScreen = Screen.EXPLORE },
+                                    icon = { Icon(Icons.Default.Category, contentDescription = "Explore") },
+                                    label = { Text("Explore", fontSize = 11.sp) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = BackgroundDark,
-                                        selectedTextColor = BrandCyan,
-                                        indicatorColor = BrandCyan,
-                                        unselectedIconColor = TextSecondary,
-                                        unselectedTextColor = TextSecondary
+                                        selectedIconColor = AmazonTeal,
+                                        selectedTextColor = AmazonTeal,
+                                        indicatorColor = AsliGreenContainer,
+                                        unselectedIconColor = TextMutedGrey,
+                                        unselectedTextColor = TextMutedGrey
                                     )
                                 )
 
+                                // 3. Compare / Deals Tab
                                 NavigationBarItem(
-                                    selected = currentScreen == Screen.PRICE_ALERTS,
-                                    onClick = { currentScreen = Screen.PRICE_ALERTS },
-                                    icon = { Icon(Icons.Default.Notifications, contentDescription = "Alerts") },
-                                    label = { Text("Alerts") },
+                                    selected = currentScreen == Screen.DEALS,
+                                    onClick = { currentScreen = Screen.DEALS },
+                                    icon = { Icon(Icons.Default.LocalOffer, contentDescription = "Compare & Deals") },
+                                    label = { Text("Deals", fontSize = 11.sp) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = BackgroundDark,
-                                        selectedTextColor = BrandCyan,
-                                        indicatorColor = BrandCyan,
-                                        unselectedIconColor = TextSecondary,
-                                        unselectedTextColor = TextSecondary
+                                        selectedIconColor = AmazonTeal,
+                                        selectedTextColor = AmazonTeal,
+                                        indicatorColor = AsliGreenContainer,
+                                        unselectedIconColor = TextMutedGrey,
+                                        unselectedTextColor = TextMutedGrey
                                     )
                                 )
 
+                                // 4. Saved / Alerts Tab
                                 NavigationBarItem(
-                                    selected = currentScreen == Screen.AFFILIATE_INFO,
-                                    onClick = { currentScreen = Screen.AFFILIATE_INFO },
-                                    icon = { Icon(Icons.Default.Hub, contentDescription = "Cuelinks") },
-                                    label = { Text("Aggregator") },
+                                    selected = currentScreen == Screen.SAVED_ALERTS,
+                                    onClick = { currentScreen = Screen.SAVED_ALERTS },
+                                    icon = { Icon(Icons.Default.NotificationsNone, contentDescription = "Alerts") },
+                                    label = { Text("Alerts", fontSize = 11.sp) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = BackgroundDark,
-                                        selectedTextColor = BrandCyan,
-                                        indicatorColor = BrandCyan,
-                                        unselectedIconColor = TextSecondary,
-                                        unselectedTextColor = TextSecondary
+                                        selectedIconColor = AmazonTeal,
+                                        selectedTextColor = AmazonTeal,
+                                        indicatorColor = AsliGreenContainer,
+                                        unselectedIconColor = TextMutedGrey,
+                                        unselectedTextColor = TextMutedGrey
+                                    )
+                                )
+
+                                // 5. Account Tab
+                                NavigationBarItem(
+                                    selected = currentScreen == Screen.ACCOUNT,
+                                    onClick = { currentScreen = Screen.ACCOUNT },
+                                    icon = { Icon(Icons.Default.PersonOutline, contentDescription = "Account") },
+                                    label = { Text("Account", fontSize = 11.sp) },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = AmazonTeal,
+                                        selectedTextColor = AmazonTeal,
+                                        indicatorColor = AsliGreenContainer,
+                                        unselectedIconColor = TextMutedGrey,
+                                        unselectedTextColor = TextMutedGrey
                                     )
                                 )
                             }
@@ -129,8 +166,45 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = Screen.PRODUCT_DETAIL
                                     },
                                     onManageCardsClick = { currentScreen = Screen.MY_CARDS },
-                                    onAlertsClick = { currentScreen = Screen.PRICE_ALERTS },
+                                    onAlertsClick = { currentScreen = Screen.SAVED_ALERTS },
                                     onAffiliateInfoClick = { currentScreen = Screen.AFFILIATE_INFO }
+                                )
+                            }
+
+                            Screen.EXPLORE -> {
+                                ExploreScreen(
+                                    viewModel = viewModel,
+                                    onCategorySelected = { currentScreen = Screen.HOME },
+                                    onKeywordSelected = { currentScreen = Screen.HOME },
+                                    onBack = { currentScreen = Screen.HOME }
+                                )
+                            }
+
+                            Screen.DEALS -> {
+                                DealsScreen(
+                                    viewModel = viewModel,
+                                    onProductClick = { product ->
+                                        viewModel.selectProduct(product)
+                                        currentScreen = Screen.PRODUCT_DETAIL
+                                    },
+                                    onBack = { currentScreen = Screen.HOME }
+                                )
+                            }
+
+                            Screen.SAVED_ALERTS, Screen.PRICE_ALERTS -> {
+                                PriceAlertsScreen(
+                                    viewModel = viewModel,
+                                    onBack = { currentScreen = Screen.HOME }
+                                )
+                            }
+
+                            Screen.ACCOUNT -> {
+                                AccountScreen(
+                                    viewModel = viewModel,
+                                    onManageCardsClick = { currentScreen = Screen.MY_CARDS },
+                                    onAlertsClick = { currentScreen = Screen.SAVED_ALERTS },
+                                    onAffiliateInfoClick = { currentScreen = Screen.AFFILIATE_INFO },
+                                    onBack = { currentScreen = Screen.HOME }
                                 )
                             }
 
@@ -146,21 +220,14 @@ class MainActivity : ComponentActivity() {
                             Screen.MY_CARDS -> {
                                 MyCardsScreen(
                                     viewModel = viewModel,
-                                    onBack = { currentScreen = Screen.HOME }
-                                )
-                            }
-
-                            Screen.PRICE_ALERTS -> {
-                                PriceAlertsScreen(
-                                    viewModel = viewModel,
-                                    onBack = { currentScreen = Screen.HOME }
+                                    onBack = { currentScreen = Screen.ACCOUNT }
                                 )
                             }
 
                             Screen.AFFILIATE_INFO -> {
                                 AffiliateInfoScreen(
                                     viewModel = viewModel,
-                                    onBack = { currentScreen = Screen.HOME }
+                                    onBack = { currentScreen = Screen.ACCOUNT }
                                 )
                             }
                         }

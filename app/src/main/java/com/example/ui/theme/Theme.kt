@@ -1,43 +1,42 @@
 package com.example.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val CompareCartDarkColorScheme = darkColorScheme(
-    primary = BrandCyan,
-    onPrimary = BackgroundDark,
-    primaryContainer = BrandBlueDark,
-    onPrimaryContainer = Color.White,
-    secondary = BrandBlue,
+private val CompareCartLightColorScheme = lightColorScheme(
+    primary = AmazonTeal,
+    onPrimary = Color.White,
+    primaryContainer = AmazonYellow,
+    onPrimaryContainer = TextDark,
+    secondary = AmazonOrange,
     onSecondary = Color.White,
-    secondaryContainer = SurfaceVariantDark,
-    onSecondaryContainer = BrandCyan,
-    tertiary = AsliGreen,
-    onTertiary = Color.Black,
+    secondaryContainer = SurfaceLightGrey,
+    onSecondaryContainer = TextDark,
+    tertiary = AmazonGreen,
+    onTertiary = Color.White,
     tertiaryContainer = AsliGreenContainer,
-    onTertiaryContainer = AsliGreen,
-    background = BackgroundDark,
-    onBackground = TextPrimary,
-    surface = SurfaceDark,
-    onSurface = TextPrimary,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = TextSecondary,
-    outline = BorderSubtle,
-    outlineVariant = BorderActive,
-    error = ErrorRed,
+    onTertiaryContainer = AmazonGreen,
+    background = BackgroundWhite,
+    onBackground = TextDark,
+    surface = SurfaceWhite,
+    onSurface = TextDark,
+    surfaceVariant = SurfaceLightGrey,
+    onSurfaceVariant = TextMutedGrey,
+    outline = BorderLight,
+    outlineVariant = BorderSubtleGrey,
+    error = AmazonRed,
     onError = Color.White
 )
 
 @Composable
 fun CompareCartTheme(
-    darkTheme: Boolean = true, // Default to sleek high-contrast dark theme as requested
+    darkTheme: Boolean = false, // Clean, crisp Amazon Light Theme by default
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = CompareCartDarkColorScheme,
+        colorScheme = CompareCartLightColorScheme,
         typography = Typography,
         content = content
     )

@@ -13,7 +13,10 @@ import com.example.data.remote.CuelinksAffiliateManager
 import com.example.data.remote.GeminiHinglishAdvisor
 import com.example.data.repository.PriceAlertRepository
 import com.example.data.repository.ProductRepository
+import com.example.data.repository.UniversalProductCatalog
 import com.example.data.repository.UserCardRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -30,6 +33,10 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
     private val productRepo = ProductRepository()
     private val cardRepo = UserCardRepository(db.userCardDao())
     private val alertRepo = PriceAlertRepository(db.priceAlertDao())
+
+    private var searchJob: Job? = null
+    private var liveFetchJob: Job? = null
+    private val searchCache = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -48,6 +55,12 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _aiAdviceMessage = MutableStateFlow<String?>(null)
     val aiAdviceMessage = _aiAdviceMessage.asStateFlow()
+
+    private val _isLiveSearching = MutableStateFlow(false)
+    val isLiveSearching = _isLiveSearching.asStateFlow()
+
+    private val _liveSearchStatus = MutableStateFlow<String?>(null)
+    val liveSearchStatus = _liveSearchStatus.asStateFlow()
 
     private val _conversionDialogState = MutableStateFlow<ConversionDialogState?>(null)
     val conversionDialogState = _conversionDialogState.asStateFlow()
@@ -77,12 +90,21 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
         _buyNowOnly
     ) { products, query, category, asliOnly, buyNow ->
         val q = query.trim().lowercase()
+        val tokens = q.split("\\s+".toRegex()).filter { it.length >= 2 }
         products.filter { p ->
+            val titleLower = p.title.lowercase()
+            val brandLower = p.brand.lowercase()
+            val catLower = p.category.lowercase()
+            val specsLower = p.specs.joinToString(" ").lowercase()
+
             val matchQuery = if (q.isBlank()) true else {
-                p.title.lowercase().contains(q) ||
-                p.brand.lowercase().contains(q) ||
-                p.category.lowercase().contains(q) ||
-                p.specs.any { it.lowercase().contains(q) }
+                titleLower.contains(q) ||
+                brandLower.contains(q) ||
+                catLower.contains(q) ||
+                specsLower.contains(q) ||
+                (tokens.isNotEmpty() && tokens.any { token ->
+                    titleLower.contains(token) || brandLower.contains(token) || catLower.contains(token)
+                })
             }
             val matchCat = if (category == "All") true else p.category.equals(category, ignoreCase = true)
             val matchAsli = if (asliOnly) p.fakeDiscountAnalysis.isAsliDiscount else true
@@ -90,7 +112,7 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
 
             matchQuery && matchCat && matchAsli && matchBuy
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProductRepository.getSeedProducts())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UniversalProductCatalog.getAllUniversalProducts())
 
     init {
         viewModelScope.launch {
@@ -100,13 +122,78 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
+        searchJob?.cancel()
+        liveFetchJob?.cancel()
+
         if (query.isBlank()) {
             _aiAdviceMessage.value = null
+            _liveSearchStatus.value = null
+            _isLiveSearching.value = false
+            return
+        }
+
+        // 500ms debounce to prevent continuous network requests while typing
+        searchJob = viewModelScope.launch {
+            delay(500)
+            val trimmed = query.trim()
+            if (trimmed.length >= 2) {
+                performDynamicLiveFetch(trimmed, _selectedCategory.value)
+            }
         }
     }
 
     fun onCategorySelected(category: String) {
         _selectedCategory.value = category
+        if (_searchQuery.value.isNotBlank()) {
+            searchJob?.cancel()
+            performDynamicLiveFetch(_searchQuery.value.trim(), category)
+        }
+    }
+
+    fun triggerExplicitLiveSearch() {
+        val q = _searchQuery.value.trim()
+        if (q.isNotBlank()) {
+            searchJob?.cancel()
+            val cacheKey = "${q.lowercase()}_${_selectedCategory.value}"
+            searchCache.remove(cacheKey)
+            performDynamicLiveFetch(q, _selectedCategory.value)
+        }
+    }
+
+    private fun performDynamicLiveFetch(query: String, category: String) {
+        liveFetchJob?.cancel()
+        liveFetchJob = viewModelScope.launch {
+            val cacheKey = "${query.lowercase()}_$category"
+            val lastFetched = searchCache[cacheKey] ?: 0L
+            val now = System.currentTimeMillis()
+
+            // Skip re-fetching if requested within the last 45 seconds to prevent spam
+            if (now - lastFetched < 45_000L) {
+                _liveSearchStatus.value = "Showing verified deals for \"$query\""
+                return@launch
+            }
+
+            _isLiveSearching.value = true
+            _liveSearchStatus.value = "Fetching live comparisons across Amazon, Flipkart, JioMart & Myntra..."
+            try {
+                // Safeguard with 3000ms timeout so network slow-downs never hang or freeze UI
+                val liveItems = kotlinx.coroutines.withTimeoutOrNull(3000L) {
+                    productRepo.searchLiveAndCached(query, category)
+                } ?: emptyList()
+
+                searchCache[cacheKey] = now
+                if (liveItems.isNotEmpty()) {
+                    _liveSearchStatus.value = "Live prices synced from 5+ merchants for \"$query\""
+                } else {
+                    _liveSearchStatus.value = null
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("CompareCartVM", "Search fetch interrupted: ${e.message}")
+                _liveSearchStatus.value = null
+            } finally {
+                _isLiveSearching.value = false
+            }
+        }
     }
 
     fun toggleAsliDiscountFilter() {
@@ -175,6 +262,7 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
                 _selectedCategory.value = result.category
             }
             _aiAdviceMessage.value = result.userSummaryAdvice
+            performDynamicLiveFetch(queryText, result.category ?: _selectedCategory.value)
         }
     }
 

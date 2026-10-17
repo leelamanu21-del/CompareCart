@@ -2,10 +2,1471 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CompareCart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CompareCart.in - Compare Prices Across Amazon, Flipkart & Myntra</title>
+  <style>
+    :root {
+      --bg-white: #FFFFFF;
+      --surface-white: #FFFFFF;
+      --surface-light: #F7F8F8;
+      --surface-card: #FFFFFF;
+      --amazon-navy: #131921;
+      --amazon-navy-light: #232F3E;
+      --amazon-yellow: #FFD814;
+      --amazon-yellow-hover: #F7CA00;
+      --amazon-orange: #FF9900;
+      --amazon-teal: #007185;
+      --amazon-red: #B12704;
+      --asli-green: #067D62;
+      --asli-green-bg: #E6F4EA;
+      --fake-orange: #C45500;
+      --fake-orange-bg: #FFF3E0;
+      --text-dark: #0F1111;
+      --text-muted: #565959;
+      --text-light: #767676;
+      --border-light: #E5E7EB;
+      --border-subtle: #D5D9D9;
+      --border-divider: #EAEDED;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Plus Jakarta Sans", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-white);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Amazon Search Header */
+    header {
+      background-color: var(--surface-white);
+      border-bottom: 1px solid var(--border-divider);
+      padding: 10px 16px 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-badge {
+      width: 30px;
+      height: 30px;
+      background: var(--amazon-navy-light);
+      color: var(--amazon-orange);
+      font-weight: 900;
+      font-size: 14px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-text {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--text-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .brand-text span {
+      color: var(--amazon-orange);
+    }
+
+    .cuelinks-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--asli-green);
+      background: var(--asli-green-bg);
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(6, 125, 98, 0.2);
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface-white);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 12px;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--amazon-orange);
+      box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-dark);
+      font-size: 14px;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .clear-search-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: none;
+      font-size: 16px;
+      padding: 0 4px;
+    }
+
+    /* Live Auto-Suggestions Strip */
+    .suggestions-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: var(--surface-light);
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border-divider);
+    }
+
+    .suggestions-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sugg-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .sugg-pill {
+      background: var(--surface-white);
+      border: 1px solid var(--border-light);
+      color: var(--text-dark);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .sugg-pill:hover, .sugg-pill.active {
+      border-color: var(--amazon-teal);
+      color: var(--amazon-teal);
+      background: #E8F5F7;
+    }
+
+    /* Category Navigation */
+    .category-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 16px;
+      background: var(--surface-white);
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--border-divider);
+    }
+
+    .category-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill {
+      background: var(--surface-light);
+      border: 1px solid var(--border-light);
+      color: var(--text-dark);
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .pill.active {
+      background: var(--amazon-navy);
+      color: #FFFFFF;
+      font-weight: 700;
+      border-color: var(--amazon-navy);
+    }
+
+    /* Main Container */
+    .main-content {
+      flex: 1;
+      padding: 14px 16px 84px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .info-strip strong {
+      color: var(--text-dark);
+    }
+
+    /* Loader Indicator */
+    .search-loader {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px;
+      color: var(--amazon-teal);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-light);
+      border-top-color: var(--amazon-orange);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Product Card - Clean Amazon Style */
+    .product-card {
+      background: var(--surface-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .product-card:hover {
+      border-color: var(--border-subtle);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .card-badges {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .badge-asli {
+      background: var(--asli-green-bg);
+      color: var(--asli-green);
+    }
+
+    .badge-fake {
+      background: var(--fake-orange-bg);
+      color: var(--fake-orange);
+    }
+
+    .buy-signal {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--asli-green);
+      background: var(--asli-green-bg);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .card-body {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .product-img {
+      width: 95px;
+      height: 95px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--surface-light);
+      flex-shrink: 0;
+    }
+
+    .product-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .product-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .stars {
+      color: #FFA41C;
+      font-size: 12px;
+      letter-spacing: -1px;
+    }
+
+    .review-count {
+      color: var(--amazon-teal);
+      font-size: 11px;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .price-main {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .price-mrp {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    .price-off {
+      font-size: 12px;
+      color: var(--amazon-red);
+      font-weight: 700;
+    }
+
+    .card-discount-note {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--asli-green);
+    }
+
+    /* Store Price Matrix */
+    .merchant-matrix {
+      background: var(--surface-light);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .store-prices {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .store-col {
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+    }
+
+    .store-name {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .store-price {
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .store-name.cheapest {
+      color: var(--amazon-teal);
+      font-weight: 700;
+    }
+
+    .store-price.cheapest {
+      color: var(--asli-green);
+    }
+
+    .compare-buy-btn {
+      background: var(--amazon-yellow);
+      color: var(--text-dark);
+      border: 1px solid #FCD200;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .compare-buy-btn:hover {
+      background: var(--amazon-yellow-hover);
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    /* Explore Grid */
+    .explore-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .explore-card {
+      background: var(--surface-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .explore-card:hover {
+      border-color: var(--amazon-teal);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .explore-card h4 {
+      font-size: 14px;
+      color: var(--text-dark);
+      font-weight: 700;
+    }
+
+    .explore-card p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .explore-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .explore-tag {
+      font-size: 10px;
+      background: var(--surface-light);
+      border: 1px solid var(--border-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-dark);
+    }
+
+    /* Deals Header Banner */
+    .deals-banner {
+      background: #FFF7ED;
+      border: 1px solid #FFEDD5;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .deals-banner-icon {
+      font-size: 24px;
+    }
+
+    .deals-banner h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #9A3412;
+    }
+
+    .deals-banner p {
+      font-size: 12px;
+      color: #7C2D12;
+    }
+
+    /* Account View */
+    .profile-card {
+      background: var(--surface-light);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--amazon-navy);
+      color: #FFFFFF;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .account-section {
+      background: var(--surface-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .account-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dark);
+      border-bottom: 1px solid var(--border-divider);
+      padding-bottom: 8px;
+    }
+
+    .card-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--surface-light);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .card-item span.bank-tag {
+      font-weight: 700;
+      color: var(--amazon-teal);
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 40px 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+    }
+
+    .reset-btn {
+      background: var(--surface-white);
+      border: 1px solid var(--amazon-teal);
+      color: var(--amazon-teal);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+
+    /* Bottom Navigation Bar: 5 Standard Recognizable Icons */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface-white);
+      border-top: 1px solid var(--border-divider);
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 0;
+      z-index: 1000;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      flex: 1;
+      padding: 4px 0;
+      transition: color 0.15s ease;
+    }
+
+    .nav-tab svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .nav-tab.active {
+      color: var(--amazon-teal);
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
-  <h1>CompareCart - Price Comparison & Smart Shopping Advisor</h1>
+
+  <!-- Top Amazon Search Header -->
+  <header>
+    <div class="brand-row">
+      <div class="brand-logo">
+        <div class="logo-badge">CC</div>
+        <div class="brand-text">CompareCart<span>.in</span></div>
+      </div>
+      <div class="cuelinks-badge">✓ Cuelinks v3 Verified</div>
+    </div>
+
+    <!-- Clean Amazon-Style Search Box -->
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search CompareCart.in (shoes, t-shirt, rice, mobile...)" autocomplete="off">
+      <button class="clear-search-btn" id="clear-search-btn" aria-label="Clear Search">✕</button>
+    </div>
+  </header>
+
+  <!-- Live Auto-Suggestions Strip -->
+  <div class="suggestions-strip" id="suggestions-strip">
+    <span class="sugg-label">Popular:</span>
+    <div class="sugg-pill">Shoes</div>
+    <div class="sugg-pill">T-Shirt</div>
+    <div class="sugg-pill">Rice</div>
+    <div class="sugg-pill">Headphones</div>
+    <div class="sugg-pill">Mobile Case</div>
+    <div class="sugg-pill">Air Fryer</div>
+    <div class="sugg-pill">Smartwatch</div>
+    <div class="sugg-pill">Sunscreen</div>
+    <div class="sugg-pill">Pressure Cooker</div>
+    <div class="sugg-pill">Atomic Habits</div>
+  </div>
+
+  <!-- Category Pills -->
+  <div class="category-pills" id="category-bar">
+    <div class="pill active" data-category="All">All</div>
+    <div class="pill" data-category="Fashion">Fashion</div>
+    <div class="pill" data-category="Home & Kitchen">Home & Kitchen</div>
+    <div class="pill" data-category="Groceries">Groceries</div>
+    <div class="pill" data-category="Beauty">Beauty</div>
+    <div class="pill" data-category="Books">Books</div>
+    <div class="pill" data-category="Daily Essentials">Daily Essentials</div>
+    <div class="pill" data-category="Electronics">Electronics</div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+
+    <!-- TAB 1: HOME (Products feed) -->
+    <section class="tab-pane active" id="pane-home">
+      <div class="info-strip">
+        <span id="results-count">Showing verified deals</span>
+        <span style="color: var(--asli-green); font-weight: 600;">✓ Live Price Checks Active</span>
+      </div>
+
+      <!-- Loading State -->
+      <div class="search-loader" id="search-loader">
+        <div class="spinner"></div>
+        <span>Searching Amazon, Flipkart & Myntra live...</span>
+      </div>
+
+      <!-- Products Feed Container -->
+      <div id="products-list"></div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state">
+        <h3>No results found</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">Try searching for shoes, t-shirt, rice, air fryer, or headphones</p>
+        <button class="reset-btn" id="reset-search-btn">Reset Search & Show All Deals</button>
+      </div>
+    </section>
+
+    <!-- TAB 2: EXPLORE (All Categories) -->
+    <section class="tab-pane" id="pane-explore">
+      <div class="info-strip">
+        <strong>Explore All Categories</strong>
+        <span>Universal Product Catalog</span>
+      </div>
+      <div class="explore-grid" id="explore-grid"></div>
+    </section>
+
+    <!-- TAB 3: DEALS (Price Comparison Dashboard) -->
+    <section class="tab-pane" id="pane-deals">
+      <div class="deals-banner">
+        <div class="deals-banner-icon">🔥</div>
+        <div>
+          <h3>Asli Discount & Price Drop Radar</h3>
+          <p>Verified historical lows and multi-store price gaps across Amazon & Flipkart</p>
+        </div>
+      </div>
+      <div id="deals-list"></div>
+    </section>
+
+    <!-- TAB 4: ALERTS (Saved & Tracked Prices) -->
+    <section class="tab-pane" id="pane-alerts">
+      <div class="account-section">
+        <h3>Active Price Drop Alerts</h3>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+          CompareCart monitors merchant sellers on Amazon, Flipkart, Myntra, and JioMart 24/7. When prices hit your target, you receive an instant notification.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;" id="alerts-list">
+          <div class="card-item">
+            <div>
+              <strong>Apple iPhone 16 (128 GB)</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Target: ₹65,000 • Current: ₹67,900</div>
+            </div>
+            <span style="font-size: 11px; color: var(--asli-green); font-weight: 700;">Tracking</span>
+          </div>
+          <div class="card-item">
+            <div>
+              <strong>Sony WH-1000XM5 ANC Headphones</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Target: ₹24,990 • Current: ₹26,990</div>
+            </div>
+            <span style="font-size: 11px; color: var(--asli-green); font-weight: 700;">Tracking</span>
+          </div>
+          <div class="card-item">
+            <div>
+              <strong>Prestige Triply 3L Cooker</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Target: ₹1,699 • Current: ₹1,799</div>
+            </div>
+            <span style="font-size: 11px; color: var(--asli-green); font-weight: 700;">Tracking</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ACCOUNT (User Profile & Cards) -->
+    <section class="tab-pane" id="pane-account">
+      <div class="profile-card">
+        <div class="profile-avatar">U</div>
+        <div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--text-dark);">CompareCart Shopper</div>
+          <div style="font-size: 12px; color: var(--text-muted);">Smart Price Comparison & Cashbacks</div>
+        </div>
+      </div>
+
+      <div class="account-section">
+        <h3>Saved Bank Cards for Instant Discounts</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">
+          Your cards are matched with live merchant promotions (HDFC 10%, ICICI 10%, SBI 10%) to calculate your real net effective price.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 8px;" id="saved-cards-list">
+          <div class="card-item">
+            <div>
+              <span class="bank-tag">HDFC Bank</span> Credit Card
+              <div style="font-size: 11px; color: var(--text-muted);">Instant 10% discount up to ₹1,500 on Amazon & Flipkart</div>
+            </div>
+            <span style="color: var(--asli-green); font-weight: 700; font-size: 12px;">Active</span>
+          </div>
+          <div class="card-item">
+            <div>
+              <span class="bank-tag">ICICI Bank</span> Amazon Pay Credit Card
+              <div style="font-size: 11px; color: var(--text-muted);">5% Unlimited Cashback on Amazon</div>
+            </div>
+            <span style="color: var(--asli-green); font-weight: 700; font-size: 12px;">Active</span>
+          </div>
+          <div class="card-item">
+            <div>
+              <span class="bank-tag">SBI Bank</span> Cashback Credit Card
+              <div style="font-size: 11px; color: var(--text-muted);">5% Cashback across all online e-commerce platforms</div>
+            </div>
+            <span style="color: var(--asli-green); font-weight: 700; font-size: 12px;">Active</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="account-section">
+        <h3>Affiliate Network & Monetization</h3>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+          All outbound store links are converted into Cuelinks v3 monetized links (<code>linksredirect.com</code> / <code>clnk.in</code>). Purchases support continuous price tracking at zero extra cost to you.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar: 5 Standard Recognizable Icons -->
+  <nav class="bottom-nav">
+    <div class="nav-tab active" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-tab" data-tab="explore">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2l-5.5 9h11z M12 22l5.5-9h-11z M22 12l-9-5.5v11z M2 12l9 5.5v-11z"/>
+      </svg>
+      <span>Explore</span>
+    </div>
+    <div class="nav-tab" data-tab="deals">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 6.33 7 5.5 7z"/>
+      </svg>
+      <span>Deals</span>
+    </div>
+    <div class="nav-tab" data-tab="alerts">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+      </svg>
+      <span>Alerts</span>
+    </div>
+    <div class="nav-tab" data-tab="account">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      <span>Account</span>
+    </div>
+  </nav>
+
+  <script>
+    // Universal Comprehensive Product Catalog across all categories
+    const catalog = [
+      // FASHION
+      {
+        id: "p-fsh-1",
+        title: "Puma Unisex-Adult Smashic Low-Top Sneakers",
+        category: "Fashion",
+        brand: "Puma",
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+        rating: 4.4,
+        reviews: 8240,
+        mrp: 4499,
+        lowestPrice: 1799,
+        merchants: [
+          { name: "Myntra", price: 1799, url: "https://www.myntra.com" },
+          { name: "Amazon", price: 1899, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 1949, url: "https://www.flipkart.com" }
+        ]
+      },
+      {
+        id: "p-fsh-2",
+        title: "Nike Air Monarch IV Training & Walking Shoes",
+        category: "Fashion",
+        brand: "Nike",
+        image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&auto=format&fit=crop&q=80",
+        rating: 4.5,
+        reviews: 12500,
+        mrp: 6495,
+        lowestPrice: 4299,
+        merchants: [
+          { name: "Myntra", price: 4299, url: "https://www.myntra.com" },
+          { name: "Amazon", price: 4495, url: "https://www.amazon.in" },
+          { name: "Ajio", price: 4599, url: "https://www.ajio.com" }
+        ]
+      },
+      {
+        id: "p-fsh-3",
+        title: "Allen Solly Men's Regular Fit Solid Polo T-Shirt",
+        category: "Fashion",
+        brand: "Allen Solly",
+        image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
+        rating: 4.2,
+        reviews: 9400,
+        mrp: 1099,
+        lowestPrice: 599,
+        merchants: [
+          { name: "Amazon", price: 599, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 649, url: "https://www.flipkart.com" },
+          { name: "Myntra", price: 699, url: "https://www.myntra.com" }
+        ]
+      },
+      {
+        id: "p-fsh-4",
+        title: "Fossil Grant Chronograph Blue Dial Men's Watch",
+        category: "Fashion",
+        brand: "Fossil",
+        image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 6200,
+        mrp: 12495,
+        lowestPrice: 7495,
+        merchants: [
+          { name: "Amazon", price: 7495, url: "https://www.amazon.in" },
+          { name: "Myntra", price: 7795, url: "https://www.myntra.com" },
+          { name: "Flipkart", price: 7995, url: "https://www.flipkart.com" }
+        ]
+      },
+
+      // ELECTRONICS
+      {
+        id: "p-elec-1",
+        title: "Apple iPhone 16 (128 GB) - Ultramarine Blue",
+        category: "Electronics",
+        brand: "Apple",
+        image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80",
+        rating: 4.7,
+        reviews: 14280,
+        mrp: 79900,
+        lowestPrice: 67900,
+        merchants: [
+          { name: "Amazon", price: 67900, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 68499, url: "https://www.flipkart.com" },
+          { name: "Croma", price: 69900, url: "https://www.croma.com" }
+        ]
+      },
+      {
+        id: "p-elec-2",
+        title: "boAt Airdopes 141 True Wireless Earbuds (42H Playtime)",
+        category: "Electronics",
+        brand: "boAt",
+        image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
+        rating: 4.3,
+        reviews: 184000,
+        mrp: 4490,
+        lowestPrice: 1099,
+        merchants: [
+          { name: "Amazon", price: 1099, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 1149, url: "https://www.flipkart.com" },
+          { name: "JioMart", price: 1199, url: "https://www.jiomart.com" }
+        ]
+      },
+      {
+        id: "p-elec-3",
+        title: "Sony WH-1000XM5 Wireless Industry Leading Noise Canceling Headphones",
+        category: "Electronics",
+        brand: "Sony",
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80",
+        rating: 4.8,
+        reviews: 9500,
+        mrp: 34990,
+        lowestPrice: 26990,
+        merchants: [
+          { name: "Amazon", price: 26990, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 27490, url: "https://www.flipkart.com" },
+          { name: "Croma", price: 28990, url: "https://www.croma.com" }
+        ]
+      },
+      {
+        id: "p-elec-4",
+        title: "Spigen Ultra Hybrid Matte Shockproof Mobile Back Case Cover",
+        category: "Electronics",
+        brand: "Spigen",
+        image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&auto=format&fit=crop&q=80",
+        rating: 4.5,
+        reviews: 18000,
+        mrp: 1999,
+        lowestPrice: 999,
+        merchants: [
+          { name: "Amazon", price: 999, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 1049, url: "https://www.flipkart.com" }
+        ]
+      },
+
+      // HOME & KITCHEN
+      {
+        id: "p-kit-1",
+        title: "Prestige Svachh Triply Hard Anodised Pressure Cooker (3L)",
+        category: "Home & Kitchen",
+        brand: "Prestige",
+        image: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 21400,
+        mrp: 2890,
+        lowestPrice: 1799,
+        merchants: [
+          { name: "Amazon", price: 1799, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 1849, url: "https://www.flipkart.com" },
+          { name: "JioMart", price: 1899, url: "https://www.jiomart.com" }
+        ]
+      },
+      {
+        id: "p-kit-2",
+        title: "Philips Digital Air Fryer HD9200 Rapid Air Technology (4.1L)",
+        category: "Home & Kitchen",
+        brand: "Philips",
+        image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 14800,
+        mrp: 9995,
+        lowestPrice: 5699,
+        merchants: [
+          { name: "Amazon", price: 5699, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 5799, url: "https://www.flipkart.com" },
+          { name: "Croma", price: 5999, url: "https://www.croma.com" }
+        ]
+      },
+      {
+        id: "p-kit-3",
+        title: "Hawkins Futura Hard Anodised Deep Kadai with Lid (2.5L)",
+        category: "Home & Kitchen",
+        brand: "Hawkins",
+        image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&auto=format&fit=crop&q=80",
+        rating: 4.7,
+        reviews: 16500,
+        mrp: 2150,
+        lowestPrice: 1499,
+        merchants: [
+          { name: "Amazon", price: 1499, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 1549, url: "https://www.flipkart.com" }
+        ]
+      },
+
+      // GROCERIES
+      {
+        id: "p-groc-1",
+        title: "Daawat Biryani Basmati Rice (5 Kg, Longest Grains)",
+        category: "Groceries",
+        brand: "Daawat",
+        image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 34500,
+        mrp: 1175,
+        lowestPrice: 699,
+        merchants: [
+          { name: "JioMart", price: 699, url: "https://www.jiomart.com" },
+          { name: "Amazon", price: 729, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 749, url: "https://www.flipkart.com" }
+        ]
+      },
+      {
+        id: "p-groc-2",
+        title: "Fortune Sunlite Refined Sunflower Oil Pouch (1L)",
+        category: "Groceries",
+        brand: "Fortune",
+        image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&auto=format&fit=crop&q=80",
+        rating: 4.5,
+        reviews: 19200,
+        mrp: 185,
+        lowestPrice: 139,
+        merchants: [
+          { name: "JioMart", price: 139, url: "https://www.jiomart.com" },
+          { name: "Amazon", price: 144, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 149, url: "https://www.flipkart.com" }
+        ]
+      },
+      {
+        id: "p-groc-3",
+        title: "Happilo 100% Natural California Whole Almonds (500g)",
+        category: "Groceries",
+        brand: "Happilo",
+        image: "https://images.unsplash.com/photo-1508061252224-4339462e2402?w=600&auto=format&fit=crop&q=80",
+        rating: 4.5,
+        reviews: 26800,
+        mrp: 699,
+        lowestPrice: 429,
+        merchants: [
+          { name: "Amazon", price: 429, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 449, url: "https://www.flipkart.com" },
+          { name: "JioMart", price: 459, url: "https://www.jiomart.com" }
+        ]
+      },
+
+      // BEAUTY
+      {
+        id: "p-bty-1",
+        title: "Minimalist 10% Niacinamide Face Serum with Zinc (30ml)",
+        category: "Beauty",
+        brand: "Minimalist",
+        image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 42000,
+        mrp: 599,
+        lowestPrice: 449,
+        merchants: [
+          { name: "Nykaa", price: 449, url: "https://www.nykaa.com" },
+          { name: "Amazon", price: 469, url: "https://www.amazon.in" },
+          { name: "Myntra", price: 479, url: "https://www.myntra.com" }
+        ]
+      },
+      {
+        id: "p-bty-2",
+        title: "The Derma Co 1% Hyaluronic Sunscreen Aqua Gel SPF 50 (50g)",
+        category: "Beauty",
+        brand: "The Derma Co",
+        image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80",
+        rating: 4.5,
+        reviews: 31000,
+        mrp: 499,
+        lowestPrice: 389,
+        merchants: [
+          { name: "Amazon", price: 389, url: "https://www.amazon.in" },
+          { name: "Nykaa", price: 399, url: "https://www.nykaa.com" },
+          { name: "Flipkart", price: 419, url: "https://www.flipkart.com" }
+        ]
+      },
+
+      // BOOKS
+      {
+        id: "p-bk-1",
+        title: "Atomic Habits: An Easy & Proven Way to Build Good Habits",
+        category: "Books",
+        brand: "James Clear",
+        image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80",
+        rating: 4.8,
+        reviews: 78000,
+        mrp: 799,
+        lowestPrice: 399,
+        merchants: [
+          { name: "Amazon", price: 399, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 429, url: "https://www.flipkart.com" }
+        ]
+      },
+      {
+        id: "p-bk-2",
+        title: "The Psychology of Money: Timeless lessons on wealth and greed",
+        category: "Books",
+        brand: "Morgan Housel",
+        image: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=600&auto=format&fit=crop&q=80",
+        rating: 4.8,
+        reviews: 58000,
+        mrp: 499,
+        lowestPrice: 279,
+        merchants: [
+          { name: "Amazon", price: 279, url: "https://www.amazon.in" },
+          { name: "Flipkart", price: 299, url: "https://www.flipkart.com" }
+        ]
+      },
+
+      // DAILY ESSENTIALS
+      {
+        id: "p-ess-1",
+        title: "Dettol Original Germ Protection Liquid Handwash Refill (1500ml)",
+        category: "Daily Essentials",
+        brand: "Dettol",
+        image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 28000,
+        mrp: 299,
+        lowestPrice: 199,
+        merchants: [
+          { name: "Amazon", price: 199, url: "https://www.amazon.in" },
+          { name: "JioMart", price: 209, url: "https://www.jiomart.com" },
+          { name: "Flipkart", price: 219, url: "https://www.flipkart.com" }
+        ]
+      },
+      {
+        id: "p-ess-2",
+        title: "Surf Excel Matic Top Load Liquid Detergent Pouch (2L)",
+        category: "Daily Essentials",
+        brand: "Surf Excel",
+        image: "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=600&auto=format&fit=crop&q=80",
+        rating: 4.6,
+        reviews: 32000,
+        mrp: 460,
+        lowestPrice: 349,
+        merchants: [
+          { name: "Amazon", price: 349, url: "https://www.amazon.in" },
+          { name: "JioMart", price: 359, url: "https://www.jiomart.com" },
+          { name: "Flipkart", price: 369, url: "https://www.flipkart.com" }
+        ]
+      }
+    ];
+
+    // Category Metadata for Explore screen
+    const categoryCatalog = [
+      { name: "Fashion", subtitle: "Sneakers, Jeans, T-Shirts, Watches", keywords: ["Sneakers", "Polo T-Shirt", "Nike", "Fossil Watch"] },
+      { name: "Electronics", subtitle: "Mobiles, Audio, Cases, Smartwatches", keywords: ["iPhone 16", "boAt Earbuds", "Phone Case", "Sony ANC"] },
+      { name: "Home & Kitchen", subtitle: "Cookers, Air Fryers, Kadai, Appliances", keywords: ["Prestige Cooker", "Air Fryer", "Hawkins Kadai"] },
+      { name: "Groceries", subtitle: "Basmati Rice, Sunflower Oil, Almonds", keywords: ["Daawat Rice", "Fortune Oil", "Almonds"] },
+      { name: "Beauty", subtitle: "Face Serums, Sunscreens, Skincare", keywords: ["Niacinamide", "Sunscreen", "Moisturizer"] },
+      { name: "Books", subtitle: "Bestsellers, Finance, Self-Help", keywords: ["Atomic Habits", "Psychology of Money"] },
+      { name: "Daily Essentials", subtitle: "Handwash, Detergents, Hygiene", keywords: ["Dettol Handwash", "Surf Excel"] }
+    ];
+
+    let currentCategory = "All";
+    let searchQuery = "";
+    let debounceTimer = null;
+
+    function formatINR(val) {
+      return "₹" + Math.round(val).toLocaleString("en-IN");
+    }
+
+    // Automatically wraps every merchant link with Cuelinks affiliate redirect
+    function wrapCuelinks(url) {
+      try {
+        return `https://linksredirect.com/?cid=108920&source=comparecart_app&url=${encodeURIComponent(url)}`;
+      } catch (e) {
+        return url;
+      }
+    }
+
+    // Render Product Cards
+    function renderProductCard(p) {
+      const bestStore = p.merchants[0] || { name: "Amazon", price: p.lowestPrice, url: "https://www.amazon.in" };
+      const discountPct = Math.round(((p.mrp - p.lowestPrice) / p.mrp) * 100);
+      const buyUrl = wrapCuelinks(bestStore.url);
+
+      const storePrices = p.merchants.map(m => `
+        <div class="store-col">
+          <span class="store-name ${m.price === p.lowestPrice ? 'cheapest' : ''}">${m.name}</span>
+          <span class="store-price ${m.price === p.lowestPrice ? 'cheapest' : ''}">${formatINR(m.price)}</span>
+        </div>
+      `).join("");
+
+      return `
+        <div class="product-card">
+          <div class="card-badges">
+            <span class="badge-tag badge-asli">✓ Asli Discount Verified</span>
+            <span class="buy-signal">Best Price</span>
+          </div>
+          <div class="card-body">
+            <img src="${p.image}" class="product-img" alt="${p.title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80'">
+            <div class="product-details">
+              <div class="product-title">${p.title}</div>
+              <div class="rating-row">
+                <span class="stars">★★★★☆</span>
+                <span style="font-weight: 700; font-size: 11px;">${p.rating}</span>
+                <span class="review-count">(${p.reviews.toLocaleString('en-IN')})</span>
+              </div>
+              <div class="price-row">
+                <span class="price-main">${formatINR(p.lowestPrice)}</span>
+                <span class="price-mrp">${formatINR(p.mrp)}</span>
+                <span class="price-off">(${discountPct}% off)</span>
+              </div>
+              <div class="card-discount-note">Save extra with HDFC/ICICI/SBI cards</div>
+            </div>
+          </div>
+          <div class="merchant-matrix">
+            <div class="store-prices">
+              ${storePrices}
+            </div>
+            <a href="${buyUrl}" target="_blank" rel="noopener noreferrer" class="compare-buy-btn">
+              Compare & Buy
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Main render function with error boundary
+    function render() {
+      try {
+        const container = document.getElementById("products-list");
+        const emptyState = document.getElementById("empty-state");
+        const countEl = document.getElementById("results-count");
+        const clearBtn = document.getElementById("clear-search-btn");
+
+        if (searchQuery.trim()) {
+          clearBtn.style.display = "block";
+        } else {
+          clearBtn.style.display = "none";
+        }
+
+        const qTokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+        const filtered = catalog.filter(item => {
+          const matchCat = (currentCategory === "All") || (item.category.toLowerCase() === currentCategory.toLowerCase());
+          if (!matchCat) return false;
+
+          if (qTokens.length === 0) return true;
+
+          const searchCorpus = `${item.title} ${item.brand} ${item.category}`.toLowerCase();
+          // Smart token search: matches if any search token is present
+          return qTokens.some(token => searchCorpus.includes(token));
+        });
+
+        countEl.innerHTML = `Showing <strong>${filtered.length}</strong> verified deals`;
+
+        if (filtered.length === 0) {
+          container.innerHTML = "";
+          emptyState.style.display = "block";
+          return;
+        }
+
+        emptyState.style.display = "none";
+        container.innerHTML = filtered.map(renderProductCard).join("");
+
+        // Also render Deals tab with highest discount items
+        const dealsContainer = document.getElementById("deals-list");
+        if (dealsContainer) {
+          const sortedDeals = [...catalog].sort((a, b) => {
+            const discA = (a.mrp - a.lowestPrice) / a.mrp;
+            const discB = (b.mrp - b.lowestPrice) / b.mrp;
+            return discB - discA;
+          });
+          dealsContainer.innerHTML = sortedDeals.slice(0, 10).map(renderProductCard).join("");
+        }
+
+      } catch (err) {
+        console.error("Render error handled safely:", err);
+      }
+    }
+
+    // Populate Explore Grid
+    function setupExploreGrid() {
+      const grid = document.getElementById("explore-grid");
+      if (!grid) return;
+      grid.innerHTML = categoryCatalog.map(c => `
+        <div class="explore-card" data-category="${c.name}">
+          <h4>${c.name}</h4>
+          <p>${c.subtitle}</p>
+          <div class="explore-tags">
+            ${c.keywords.map(k => `<span class="explore-tag">${k}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      grid.querySelectorAll(".explore-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const cat = card.dataset.category;
+          switchCategory(cat);
+          switchTab("home");
+        });
+      });
+    }
+
+    // Switch Category Helper
+    function switchCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll(".pill").forEach(p => {
+        if (p.dataset.category.toLowerCase() === cat.toLowerCase()) {
+          p.classList.add("active");
+        } else {
+          p.classList.remove("active");
+        }
+      });
+      render();
+    }
+
+    // Switch Bottom Tab Helper
+    function switchTab(tabName) {
+      document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+      const targetNav = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+      if (targetNav) targetNav.classList.add("active");
+
+      document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
+      const targetPane = document.getElementById(`pane-${tabName}`);
+      if (targetPane) targetPane.classList.add("active");
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // 1. Search with 500ms Debounce (Optimized to prevent continuous network requests and lag)
+    const searchInput = document.getElementById("search-input");
+    const searchLoader = document.getElementById("search-loader");
+
+    searchInput.addEventListener("input", (e) => {
+      const val = e.target.value;
+      clearTimeout(debounceTimer);
+
+      if (val.trim().length > 0) {
+        searchLoader.style.display = "flex";
+      }
+
+      debounceTimer = setTimeout(() => {
+        searchQuery = val;
+        searchLoader.style.display = "none";
+        render();
+      }, 500);
+    });
+
+    // Clear search button
+    document.getElementById("clear-search-btn").addEventListener("click", () => {
+      searchInput.value = "";
+      searchQuery = "";
+      searchLoader.style.display = "none";
+      render();
+    });
+
+    // 2. Auto-Suggestions Click Handlers
+    document.querySelectorAll(".sugg-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const text = pill.textContent.trim();
+        searchInput.value = text;
+        searchQuery = text;
+        switchTab("home");
+        render();
+      });
+    });
+
+    // 3. Category Bar Navigation
+    document.getElementById("category-bar").addEventListener("click", (e) => {
+      if (e.target.classList.contains("pill")) {
+        switchCategory(e.target.dataset.category);
+        switchTab("home");
+      }
+    });
+
+    // 4. Reset Button
+    document.getElementById("reset-search-btn").addEventListener("click", () => {
+      searchInput.value = "";
+      searchQuery = "";
+      currentCategory = "All";
+      document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+      document.querySelector('.pill[data-category="All"]').classList.add("active");
+      render();
+    });
+
+    // 5. Bottom Navigation Tabs Handling
+    document.querySelectorAll(".nav-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        const tabName = tab.dataset.tab;
+        switchTab(tabName);
+      });
+    });
+
+    // Initial setup
+    setupExploreGrid();
+    render();
+  </script>
 </body>
 </html>
