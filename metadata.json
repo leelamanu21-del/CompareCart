@@ -1,0 +1,6 @@
+{
+  "name": "CompareCart",
+  "description": "Smart E-Commerce Price Comparison & Advisor with Fake Discount Detection, My Cards Savings, and Cuelinks Link Automation",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
