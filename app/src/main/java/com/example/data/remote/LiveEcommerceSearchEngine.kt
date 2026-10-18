@@ -159,7 +159,9 @@ object LiveEcommerceSearchEngine {
                 val title = obj.getString("title")
                 val cat = obj.optString("category", category ?: "General")
                 val brand = obj.optString("brand", "Verified Brand")
-                val imageUrl = obj.optString("imageUrl", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80")
+                val brandResolved = BrandImageResolver.resolve(brand, title, cat)
+                val rawImg = obj.optString("imageUrl", "").ifBlank { obj.optString("image", "") }
+                val imageUrl = if (rawImg.isNotBlank() && !rawImg.contains("photo-1523275335684")) rawImg else brandResolved.first
                 val rating = obj.optDouble("rating", 4.3)
                 val reviewCount = obj.optInt("reviewCount", 1200)
                 val mrp = obj.optDouble("mrp", 2999.0)

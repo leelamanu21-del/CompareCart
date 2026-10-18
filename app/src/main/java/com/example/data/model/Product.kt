@@ -67,5 +67,7 @@ data class Product(
     val valueScore: ValueScoreBreakdown,
     val fakeDiscountAnalysis: FakeDiscountAnalysis,
     val badges: List<QualityBadge>,
-    val specs: List<String>
+    val specs: List<String>,
+    val secondaryImageUrl: String? = null,
+    val brandLogoUrl: String? = null
 )

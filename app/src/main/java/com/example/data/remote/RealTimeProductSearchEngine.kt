@@ -40,6 +40,37 @@ object RealTimeProductSearchEngine {
         Log.d(TAG, "Initiating real-time multi-merchant search for: \"$q\" (Category: $categoryFilter)")
         val combinedResults = mutableListOf<Product>()
 
+        // 0. Query Live Production Backend API (Render server)
+        try {
+            val encodedQ = URLEncoder.encode(q, StandardCharsets.UTF_8.toString())
+            val backendUrl = "${CuelinksAffiliateManager.BACKEND_URL}/api/search?q=$encodedQ"
+            val req = Request.Builder()
+                .url(backendUrl)
+                .addHeader("Accept", "application/json")
+                .get()
+                .build()
+            val resp = httpClient.newCall(req).execute()
+            if (resp.isSuccessful) {
+                val bodyStr = resp.body?.string() ?: ""
+                if (bodyStr.isNotBlank()) {
+                    val root = JSONObject(bodyStr)
+                    val pArr = root.optJSONArray("products")
+                    if (pArr != null && pArr.length() > 0) {
+                        for (i in 0 until pArr.length()) {
+                            val parsed = parseJsonProduct(pArr.getJSONObject(i), i)
+                            if (parsed != null) combinedResults.add(parsed)
+                        }
+                        if (combinedResults.isNotEmpty()) {
+                            Log.d(TAG, "Successfully fetched ${combinedResults.size} live products from backend $backendUrl")
+                            return@withContext wrapWithCuelinksMonetization(combinedResults.sortedBy { it.currentLowestPrice })
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Live backend search request skipped/fallback: ${e.message}")
+        }
+
         // 1. Try Gemini Live AI E-Commerce Search if API key is present
         val geminiResults = searchViaGeminiLive(q, categoryFilter)
         if (geminiResults.isNotEmpty()) {
@@ -98,9 +129,10 @@ object RealTimeProductSearchEngine {
                 val rawCategory = obj.optString("category", "General")
                 val thumbnail = obj.optString("thumbnail", "")
                 val images = obj.optJSONArray("images")
+                val brandResolved = BrandImageResolver.resolve(brand, rawTitle, rawCategory)
                 val imageUrl = if (thumbnail.isNotBlank()) thumbnail else {
                     if (images != null && images.length() > 0) images.getString(0)
-                    else "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80"
+                    else brandResolved.first
                 }
 
                 // Convert to realistic Indian INR pricing
@@ -351,7 +383,7 @@ object RealTimeProductSearchEngine {
             lower.contains("shoe") || lower.contains("sneaker") || lower.contains("footwear") || lower.contains("boot") || lower.contains("loafer") -> {
                 Sextet(
                     "Fashion",
-                    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+                    "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80",
                     listOf("Puma", "Nike", "Adidas", "Sparx", "Red Tape", "Campus", "Woodland"),
                     3999.0, 1799.0,
                     listOf("Breathable Mesh Upper", "Cushioned Memory Foam Sole", "Anti-Skid Rubber Grip", "Lightweight Daily Wear")
@@ -396,7 +428,7 @@ object RealTimeProductSearchEngine {
             lower.contains("watch") || lower.contains("smartwatch") -> {
                 Sextet(
                     "Electronics",
-                    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
+                    "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&auto=format&fit=crop&q=80",
                     listOf("Noise", "Fire-Boltt", "boAt", "Fastrack", "Titan", "Amazfit"),
                     5999.0, 1999.0,
                     listOf("1.96-inch AMOLED Always-On Display", "Bluetooth Calling with Mic", "100+ Sports & Fitness Modes", "Heart Rate & SpO2 Monitor")
@@ -594,6 +626,7 @@ object RealTimeProductSearchEngine {
             ).sortedBy { it.currentPrice } // Sort merchant offers for this product by lowest price
 
             val lowestPrice = merchants.first().currentPrice
+            val (resolvedImg, resolvedSecImg, resolvedLogo) = BrandImageResolver.resolve(brand, itemTitle, detectedCat)
 
             results.add(
                 Product(
@@ -601,7 +634,9 @@ object RealTimeProductSearchEngine {
                     title = itemTitle,
                     category = detectedCat,
                     brand = brand,
-                    imageUrl = defaultImg,
+                    imageUrl = resolvedImg,
+                    secondaryImageUrl = resolvedSecImg,
+                    brandLogoUrl = resolvedLogo,
                     rating = (4.3 + ((idx % 6) * 0.1)).coerceIn(4.0, 4.9),
                     reviewCount = 1200 + idx * 380,
                     mrp = mrp,
@@ -675,7 +710,11 @@ object RealTimeProductSearchEngine {
             val title = obj.getString("title")
             val cat = obj.optString("category", "General")
             val brand = obj.optString("brand", "Verified Brand")
-            val imageUrl = obj.optString("imageUrl", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80")
+            val brandResolved = BrandImageResolver.resolve(brand, title, cat)
+            val rawImg = obj.optString("imageUrl", "").ifBlank { obj.optString("image", "") }
+            val imageUrl = if (rawImg.isNotBlank() && !rawImg.contains("photo-1523275335684")) rawImg else brandResolved.first
+            val secImg = obj.optString("secondaryImageUrl", "").ifBlank { obj.optString("secondaryImage", brandResolved.second) }
+            val brandLogo = obj.optString("brandLogoUrl", "").ifBlank { obj.optString("brandLogo", brandResolved.third) }
             val rating = obj.optDouble("rating", 4.4)
             val reviewCount = obj.optInt("reviewCount", 1800)
             val mrp = obj.optDouble("mrp", 2499.0)
@@ -741,7 +780,9 @@ object RealTimeProductSearchEngine {
                     QualityBadge(QualityBadgeType.BEST_OVERALL_CHOICE, "Best Value Choice", "Top buyer satisfaction"),
                     QualityBadge(QualityBadgeType.ASLI_DISCOUNT_VERIFIED, "Asli Discount Verified", "Verified 90-day pricing")
                 ),
-                specs = listOf("100% Genuine Quality", "Fast Express Shipping", "Verified Brand Store")
+                specs = listOf("100% Genuine Quality", "Fast Express Shipping", "Verified Brand Store"),
+                secondaryImageUrl = secImg,
+                brandLogoUrl = brandLogo
             )
         } catch (e: Exception) {
             null

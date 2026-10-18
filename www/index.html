@@ -899,7 +899,8 @@
         title: "Puma Unisex-Adult Smashic Low-Top Sneakers",
         category: "Fashion",
         brand: "Puma",
-        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+        image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&auto=format&fit=crop&q=80",
+        secondaryImage: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=600&auto=format&fit=crop&q=80",
         rating: 4.4,
         reviews: 8240,
         mrp: 4499,
@@ -1252,11 +1253,31 @@
       }
     }
 
+    // Clean neutral brand logo SVG data URI (never wrong-branded image or camera)
+    function getBrandLogoSvg(brand) {
+      const brandName = (brand || "Brand").trim();
+      const safeName = brandName.replace(/["'<>]/g, "");
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="100%" height="100%" fill="#f8fafc" rx="12"/><circle cx="150" cy="120" r="44" fill="#e2e8f0"/><path d="M116 190 Q150 160 184 190" stroke="#94a3b8" stroke-width="5" fill="none" stroke-linecap="round"/><text x="50%" y="235" dominant-baseline="middle" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="18" font-weight="700" fill="#334155">${encodeURIComponent(safeName)}</text></svg>`;
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    }
+
+    // Resilient image error handling: attempts secondary high-res image, then brand logo SVG
+    function handleImageError(imgEl, secondaryImage, brandName) {
+      if (secondaryImage && !imgEl.dataset.triedSecondary && imgEl.src !== secondaryImage) {
+        imgEl.dataset.triedSecondary = "true";
+        imgEl.src = secondaryImage;
+        return;
+      }
+      imgEl.onerror = null;
+      imgEl.src = getBrandLogoSvg(brandName);
+    }
+
     // Render Product Cards
     function renderProductCard(p) {
       const bestStore = p.merchants[0] || { name: "Amazon", price: p.lowestPrice, url: "https://www.amazon.in" };
       const discountPct = Math.round(((p.mrp - p.lowestPrice) / p.mrp) * 100);
       const buyUrl = wrapCuelinks(bestStore.url);
+      const safeBrand = (p.brand || '').replace(/'/g, "\\'");
 
       const storePrices = p.merchants.map(m => `
         <div class="store-col">
@@ -1272,7 +1293,7 @@
             <span class="buy-signal">Best Price</span>
           </div>
           <div class="card-body">
-            <img src="${p.image}" class="product-img" alt="${p.title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80'">
+            <img src="${p.image || getBrandLogoSvg(p.brand)}" class="product-img" alt="${p.title}" loading="lazy" onerror="handleImageError(this, '${p.secondaryImage || ''}', '${safeBrand}')">
             <div class="product-details">
               <div class="product-title">${p.title}</div>
               <div class="rating-row">
@@ -1300,6 +1321,32 @@
       `;
     }
 
+    let liveSearchResults = null;
+
+    // Asynchronously fetches live e-commerce search results from backend API
+    async function performLiveSearch(query) {
+      if (!query || !query.trim()) {
+        liveSearchResults = null;
+        render();
+        return;
+      }
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.products) && data.products.length > 0) {
+            liveSearchResults = data.products;
+            render();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Backend live search unavailable, falling back to local catalog:", e);
+      }
+      liveSearchResults = null;
+      render();
+    }
+
     // Main render function with error boundary
     function render() {
       try {
@@ -1316,16 +1363,20 @@
 
         const qTokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
-        const filtered = catalog.filter(item => {
-          const matchCat = (currentCategory === "All") || (item.category.toLowerCase() === currentCategory.toLowerCase());
-          if (!matchCat) return false;
+        let filtered;
+        if (searchQuery.trim() && liveSearchResults && liveSearchResults.length > 0) {
+          filtered = liveSearchResults;
+        } else {
+          filtered = catalog.filter(item => {
+            const matchCat = (currentCategory === "All") || (item.category.toLowerCase() === currentCategory.toLowerCase());
+            if (!matchCat) return false;
 
-          if (qTokens.length === 0) return true;
+            if (qTokens.length === 0) return true;
 
-          const searchCorpus = `${item.title} ${item.brand} ${item.category}`.toLowerCase();
-          // Smart token search: matches if any search token is present
-          return qTokens.some(token => searchCorpus.includes(token));
-        });
+            const searchCorpus = `${item.title} ${item.brand} ${item.category}`.toLowerCase();
+            return qTokens.some(token => searchCorpus.includes(token));
+          });
+        }
 
         countEl.innerHTML = `Showing <strong>${filtered.length}</strong> verified deals`;
 
@@ -1415,10 +1466,10 @@
         searchLoader.style.display = "flex";
       }
 
-      debounceTimer = setTimeout(() => {
+      debounceTimer = setTimeout(async () => {
         searchQuery = val;
+        await performLiveSearch(val);
         searchLoader.style.display = "none";
-        render();
       }, 500);
     });
 
@@ -1426,18 +1477,21 @@
     document.getElementById("clear-search-btn").addEventListener("click", () => {
       searchInput.value = "";
       searchQuery = "";
+      liveSearchResults = null;
       searchLoader.style.display = "none";
       render();
     });
 
     // 2. Auto-Suggestions Click Handlers
     document.querySelectorAll(".sugg-pill").forEach(pill => {
-      pill.addEventListener("click", () => {
+      pill.addEventListener("click", async () => {
         const text = pill.textContent.trim();
         searchInput.value = text;
         searchQuery = text;
         switchTab("home");
-        render();
+        searchLoader.style.display = "flex";
+        await performLiveSearch(text);
+        searchLoader.style.display = "none";
       });
     });
 
@@ -1453,6 +1507,7 @@
     document.getElementById("reset-search-btn").addEventListener("click", () => {
       searchInput.value = "";
       searchQuery = "";
+      liveSearchResults = null;
       currentCategory = "All";
       document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
       document.querySelector('.pill[data-category="All"]').classList.add("active");

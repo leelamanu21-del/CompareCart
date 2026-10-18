@@ -12,7 +12,7 @@ object UniversalProductCatalog {
                 title = "Puma Unisex-Adult Smashic Low-Top Sneakers",
                 category = "Fashion",
                 brand = "Puma",
-                imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+                imageUrl = "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&auto=format&fit=crop&q=80",
                 rating = 4.4,
                 reviewCount = 8240,
                 mrp = 4499.0,
