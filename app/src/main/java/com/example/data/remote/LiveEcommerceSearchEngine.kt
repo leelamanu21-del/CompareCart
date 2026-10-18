@@ -324,7 +324,7 @@ object LiveEcommerceSearchEngine {
             Log.d(TAG, "Successfully dynamically fetched ${products.size} live products for query: $query")
             return@withContext products
         } catch (e: Exception) {
-            Log.e(TAG, "Error during live product fetching", e)
+            Log.w(TAG, "Live product fetching fallback: ${e.message}")
             return@withContext emptyList()
         }
     }

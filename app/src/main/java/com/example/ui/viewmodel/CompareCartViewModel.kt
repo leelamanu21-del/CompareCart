@@ -20,13 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class ConversionDialogState(
-    val isConverting: Boolean,
-    val result: ConversionResult? = null,
-    val productTitle: String,
-    val merchantName: String
-)
-
 class CompareCartViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
@@ -62,8 +55,8 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
     private val _liveSearchStatus = MutableStateFlow<String?>(null)
     val liveSearchStatus = _liveSearchStatus.asStateFlow()
 
-    private val _conversionDialogState = MutableStateFlow<ConversionDialogState?>(null)
-    val conversionDialogState = _conversionDialogState.asStateFlow()
+    private val _openUrlEvent = MutableSharedFlow<String>()
+    val openUrlEvent = _openUrlEvent.asSharedFlow()
 
     // Interactive tester state for AffiliateInfoScreen
     private val _testConversionResult = MutableStateFlow<ConversionResult?>(null)
@@ -266,27 +259,13 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    /**
-     * Executes single master aggregator link conversion via Cuelinks API v3
-     */
     fun onBuyNowClicked(product: Product, merchantPrice: MerchantPrice) {
-        _conversionDialogState.value = ConversionDialogState(
-            isConverting = true,
-            productTitle = product.title,
-            merchantName = merchantPrice.merchantName
-        )
-
         viewModelScope.launch {
             val result = CuelinksAffiliateManager.convertMerchantLink(
                 originalUrl = merchantPrice.originalUrl,
                 merchantName = merchantPrice.merchantName
             )
-            _conversionDialogState.value = ConversionDialogState(
-                isConverting = false,
-                result = result,
-                productTitle = product.title,
-                merchantName = merchantPrice.merchantName
-            )
+            _openUrlEvent.emit(result.finalUrl)
         }
     }
 
@@ -298,9 +277,5 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
             _testConversionResult.value = res
             _isTestingApi.value = false
         }
-    }
-
-    fun dismissConversionDialog() {
-        _conversionDialogState.value = null
     }
 }

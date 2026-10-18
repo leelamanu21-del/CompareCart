@@ -1,5 +1,7 @@
 package com.example
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -53,6 +55,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CompareCartTheme {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                LaunchedEffect(Unit) {
+                    viewModel.openUrlEvent.collect { url ->
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to open URL: $url", e)
+                        }
+                    }
+                }
+
                 var currentScreen by remember { mutableStateOf(Screen.HOME) }
                 val selectedProduct by viewModel.selectedProduct.collectAsState()
 
@@ -230,14 +246,6 @@ class MainActivity : ComponentActivity() {
                                     onBack = { currentScreen = Screen.ACCOUNT }
                                 )
                             }
-                        }
-
-                        val conversionDialogState by viewModel.conversionDialogState.collectAsState()
-                        if (conversionDialogState != null) {
-                            com.example.ui.components.CuelinksRedirectDialog(
-                                state = conversionDialogState!!,
-                                onDismiss = { viewModel.dismissConversionDialog() }
-                            )
                         }
                     }
                 }

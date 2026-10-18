@@ -44,7 +44,6 @@ fun ProductDetailScreen(
 
     val context = LocalContext.current
     val activeBankNames by viewModel.activeBankNames.collectAsState()
-    val conversionDialogState by viewModel.conversionDialogState.collectAsState()
 
     var showPriceAlertDialog by remember { mutableStateOf(false) }
 
