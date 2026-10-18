@@ -27,6 +27,7 @@ data class ConversionResult(
 
 object CuelinksAffiliateManager {
     private const val TAG = "CuelinksAffiliate"
+    const val BACKEND_URL = "https://comparecartbeckend.onrender.com"
     private const val CONVERT_ENDPOINT = "https://api.cuelinks.com/pub_api/v3/links/convert"
 
     private val okHttpClient = OkHttpClient.Builder()
@@ -43,24 +44,63 @@ object CuelinksAffiliateManager {
 
     /**
      * Converts raw merchant product URL to Cuelinks monetized affiliate URL
-     * via Cuelinks Pub API v3 (POST https://api.cuelinks.com/pub_api/v3/links/convert).
-     * Ensures robust URI encoding of the target URL to prevent Amazon/Flipkart error pages.
+     * via live production backend server (https://comparecartbeckend.onrender.com)
+     * and Cuelinks Pub API v3.
      */
     suspend fun convertMerchantLink(
         originalUrl: String,
         merchantName: String
     ): ConversionResult = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.CUELINKS_API_KEY.trim()
         val startTime = System.currentTimeMillis()
         val cleanedUrl = originalUrl.trim()
+        val publisherId = getPublisherId()
 
+        // 1. Try Live Production Backend Server (https://comparecartbeckend.onrender.com/api/cuelinks/convert)
+        try {
+            val backendJson = JSONObject().apply {
+                put("url", cleanedUrl)
+                put("merchant", merchantName)
+            }
+            val backendRequest = Request.Builder()
+                .url("$BACKEND_URL/api/cuelinks/convert")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Accept", "application/json")
+                .post(backendJson.toString().toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val backendResponse = okHttpClient.newCall(backendRequest).execute()
+            val latency = System.currentTimeMillis() - startTime
+            val responseBody = backendResponse.body?.string() ?: ""
+
+            if (backendResponse.isSuccessful && responseBody.isNotBlank()) {
+                val rootJson = JSONObject(responseBody)
+                val affiliateUrl = rootJson.optString("affiliateUrl", "").ifBlank {
+                    rootJson.optString("finalUrl", "")
+                }
+                if (affiliateUrl.isNotBlank()) {
+                    Log.d(TAG, "Successfully converted via live backend $BACKEND_URL: $affiliateUrl")
+                    return@withContext ConversionResult(
+                        originalUrl = cleanedUrl,
+                        finalUrl = affiliateUrl,
+                        isMonetized = true,
+                        merchantName = merchantName,
+                        message = "Live Backend ($BACKEND_URL) 200 OK — Monetized!",
+                        responseCode = backendResponse.code,
+                        latencyMs = latency,
+                        maskedTokenUsed = "Render Backend"
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Live backend conversion error, falling back to direct conversion: ${e.message}")
+        }
+
+        val apiKey = BuildConfig.CUELINKS_API_KEY.trim()
         val maskedKey = if (apiKey.length > 8 && apiKey != "MY_CUELINKS_API_KEY") {
             "${apiKey.take(4)}...${apiKey.takeLast(4)}"
         } else {
             "Not Set"
         }
-
-        val publisherId = getPublisherId()
 
         // If no valid API key is set, format redirect via Cuelinks network publisher engine with strict URI encoding
         if (apiKey.isBlank() || apiKey == "MY_CUELINKS_API_KEY") {
