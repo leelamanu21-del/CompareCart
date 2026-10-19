@@ -43,7 +43,7 @@ object RealTimeProductSearchEngine {
         // 0. Query Live Production Backend API (Render server)
         try {
             val encodedQ = URLEncoder.encode(q, StandardCharsets.UTF_8.toString())
-            val backendUrl = "${CuelinksAffiliateManager.BACKEND_URL}/api/search?q=$encodedQ"
+            val backendUrl = "${CuelinksAffiliateManager.BACKEND_URL}/api/search?q=$encodedQ&limit=80"
             val req = Request.Builder()
                 .url(backendUrl)
                 .addHeader("Accept", "application/json")
@@ -695,10 +695,14 @@ object RealTimeProductSearchEngine {
     private fun wrapWithCuelinksMonetization(products: List<Product>): List<Product> {
         return products.map { product ->
             val wrappedMerchants = product.merchantPrices.map { merchant ->
-                val encodedTarget = URLEncoder.encode(merchant.originalUrl, StandardCharsets.UTF_8.toString())
-                // Standard Cuelinks redirect URL that automatically generates publisher commission (clnk.in / linksredirect.com)
-                val monetizedAffiliateUrl = "https://linksredirect.com/?cid=108920&source=comparecart_app&url=$encodedTarget"
-                merchant.copy(originalUrl = monetizedAffiliateUrl)
+                if (merchant.originalUrl.contains("linksredirect.com")) {
+                    merchant
+                } else {
+                    val encodedTarget = URLEncoder.encode(merchant.originalUrl, StandardCharsets.UTF_8.toString())
+                    // Standard Cuelinks redirect URL with pub_id and cid
+                    val monetizedAffiliateUrl = "https://linksredirect.com/?pub_id=108920&cid=108920&source=comparecart_app&url=$encodedTarget"
+                    merchant.copy(originalUrl = monetizedAffiliateUrl)
+                }
             }
             product.copy(merchantPrices = wrappedMerchants)
         }
@@ -718,25 +722,31 @@ object RealTimeProductSearchEngine {
             val rating = obj.optDouble("rating", 4.4)
             val reviewCount = obj.optInt("reviewCount", 1800)
             val mrp = obj.optDouble("mrp", 2499.0)
-            val currentLowest = obj.optDouble("currentLowestPrice", 1299.0)
+            val currentLowest = obj.optDouble("currentLowestPrice", 1299.0).let {
+                if (it > 0) it else obj.optDouble("lowestPrice", 1299.0)
+            }
             val histLow = obj.optDouble("historicalLow", currentLowest * 0.95)
             val histHigh = obj.optDouble("historicalHigh", mrp)
             val buyWait = if (obj.optString("buyWaitSignal") == "WAIT_FOR_SALE") BuyWaitSignal.WAIT_FOR_SALE else BuyWaitSignal.BUY_NOW
 
             val merchantList = mutableListOf<MerchantPrice>()
-            if (obj.has("merchantPrices")) {
-                val mArr = obj.getJSONArray("merchantPrices")
+            val mArr = obj.optJSONArray("merchants") ?: obj.optJSONArray("merchantPrices")
+            if (mArr != null && mArr.length() > 0) {
                 for (m in 0 until mArr.length()) {
                     val mObj = mArr.getJSONObject(m)
-                    val mName = mObj.getString("merchantName")
-                    val mPrice = mObj.optDouble("currentPrice", currentLowest)
-                    val mUrl = mObj.optString("originalUrl", "https://www.amazon.in/s?k=${URLEncoder.encode(title, "UTF-8")}")
+                    val mName = mObj.optString("name", "").ifBlank { mObj.optString("merchantName", "Store") }
+                    val mPrice = mObj.optDouble("price", 0.0).let { if (it > 0) it else mObj.optDouble("currentPrice", currentLowest) }
+                    val rawUrl = mObj.optString("url", "").ifBlank {
+                        mObj.optString("pdpUrl", "").ifBlank {
+                            mObj.optString("originalUrl", "https://www.amazon.in/s?k=${URLEncoder.encode(title, "UTF-8")}")
+                        }
+                    }
 
                     merchantList.add(
                         MerchantPrice(
                             id = "mp-$id-$m",
                             merchantName = mName,
-                            originalUrl = mUrl,
+                            originalUrl = rawUrl,
                             currentPrice = mPrice,
                             discountPct = (((mrp - mPrice) / mrp) * 100).toInt().coerceAtLeast(0),
                             inStock = true,

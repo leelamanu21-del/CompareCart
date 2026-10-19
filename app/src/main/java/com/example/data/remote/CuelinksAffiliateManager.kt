@@ -106,7 +106,7 @@ object CuelinksAffiliateManager {
         if (apiKey.isBlank() || apiKey == "MY_CUELINKS_API_KEY") {
             Log.d(TAG, "Using Cuelinks network redirect fallback with Publisher ID: $publisherId")
             val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val smartAffiliateUrl = "https://linksredirect.com/?cid=$publisherId&source=comparecart_app&url=$encodedTarget"
+            val smartAffiliateUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart_app&url=$encodedTarget"
             val latency = System.currentTimeMillis() - startTime
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
@@ -165,7 +165,7 @@ object CuelinksAffiliateManager {
 
             // Fallback if API response didn't contain affiliate url
             val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val fallbackTrackedUrl = "https://linksredirect.com/?cid=$publisherId&source=comparecart&url=$encodedTarget"
+            val fallbackTrackedUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart&url=$encodedTarget"
 
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
@@ -181,7 +181,7 @@ object CuelinksAffiliateManager {
             val latency = System.currentTimeMillis() - startTime
             Log.w(TAG, "Cuelinks network conversion fallback engaged: ${e.message}")
             val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val offlineTrackedUrl = "https://linksredirect.com/?cid=$publisherId&source=comparecart&url=$encodedTarget"
+            val offlineTrackedUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart&url=$encodedTarget"
 
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
