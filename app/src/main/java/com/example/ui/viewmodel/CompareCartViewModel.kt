@@ -65,6 +65,9 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
     private val _isTestingApi = MutableStateFlow(false)
     val isTestingApi = _isTestingApi.asStateFlow()
 
+    private val _backendStatus = MutableStateFlow<com.example.data.remote.BackendStatus?>(null)
+    val backendStatus = _backendStatus.asStateFlow()
+
     val userCards: StateFlow<List<UserCard>> = cardRepo.allCards
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -110,6 +113,14 @@ class CompareCartViewModel(application: Application) : AndroidViewModel(applicat
     init {
         viewModelScope.launch {
             cardRepo.prepopulateDefaultCardsIfEmpty()
+        }
+        fetchBackendStatus()
+    }
+
+    fun fetchBackendStatus() {
+        viewModelScope.launch {
+            val status = CuelinksAffiliateManager.fetchBackendStatus()
+            _backendStatus.value = status
         }
     }
 

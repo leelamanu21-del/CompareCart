@@ -25,6 +25,13 @@ data class ConversionResult(
     val maskedTokenUsed: String = ""
 )
 
+data class BackendStatus(
+    val hasApiKey: Boolean = false,
+    val isLiveApi: Boolean = false,
+    val publisherId: String = "108920",
+    val maskedKey: String = ""
+)
+
 object CuelinksAffiliateManager {
     private const val TAG = "CuelinksAffiliate"
     const val BACKEND_URL = "https://comparecartbeckend.onrender.com"
@@ -40,6 +47,38 @@ object CuelinksAffiliateManager {
 
     private fun getPublisherId(): String {
         return "108920"
+    }
+
+    suspend fun fetchBackendStatus(): BackendStatus = withContext(Dispatchers.IO) {
+        try {
+            val req = Request.Builder()
+                .url("$BACKEND_URL/api/status")
+                .header("Accept", "application/json")
+                .get()
+                .build()
+            val resp = okHttpClient.newCall(req).execute()
+            if (resp.isSuccessful) {
+                val body = resp.body?.string() ?: ""
+                if (body.isNotBlank()) {
+                    val root = JSONObject(body)
+                    val hasKey = root.optBoolean("hasApiKey", false) ||
+                                 root.optBoolean("hasCuelinksApiKey", false) ||
+                                 root.optBoolean("liveApiMode", false) ||
+                                 root.optBoolean("cuelinksApiKeySet", false)
+                    val pubId = root.optString("publisherId", "108920")
+                    val masked = root.optString("maskedKey", "Live on Render Backend")
+                    return@withContext BackendStatus(
+                        hasApiKey = hasKey,
+                        isLiveApi = hasKey,
+                        publisherId = pubId,
+                        maskedKey = masked
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Backend status check failed: ${e.message}")
+        }
+        BackendStatus()
     }
 
     /**

@@ -44,16 +44,23 @@ fun AffiliateInfoScreen(
     val context = LocalContext.current
     val testResult by viewModel.testConversionResult.collectAsState()
     val isTesting by viewModel.isTestingApi.collectAsState()
+    val backendStatus by viewModel.backendStatus.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchBackendStatus()
+    }
 
     val rawApiKey = BuildConfig.CUELINKS_API_KEY.trim()
-    val hasApiKey = rawApiKey.isNotBlank() && rawApiKey != "MY_CUELINKS_API_KEY"
+    val hasLocalApiKey = rawApiKey.isNotBlank() && rawApiKey != "MY_CUELINKS_API_KEY"
+    val hasBackendApiKey = backendStatus?.hasApiKey == true || backendStatus?.isLiveApi == true
+    val hasApiKey = hasLocalApiKey || hasBackendApiKey
 
-    val maskedKey = if (hasApiKey && rawApiKey.length > 8) {
-        "${rawApiKey.take(4)}...${rawApiKey.takeLast(4)}"
-    } else if (hasApiKey) {
-        "Configured (${rawApiKey.length} chars)"
-    } else {
-        "Not Set"
+    val maskedKey = when {
+        hasLocalApiKey && rawApiKey.length > 8 -> "${rawApiKey.take(4)}...${rawApiKey.takeLast(4)}"
+        hasBackendApiKey && !backendStatus?.maskedKey.isNullOrBlank() && backendStatus?.maskedKey != "Not Set" -> backendStatus!!.maskedKey
+        hasBackendApiKey -> "Live on Render Backend"
+        hasLocalApiKey -> "Configured (${rawApiKey.length} chars)"
+        else -> "Not Set"
     }
 
     var testUrlInput by remember {

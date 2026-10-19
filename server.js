@@ -22,14 +22,22 @@ app.use((req, res, next) => {
 // Serve static files from www directory
 app.use(express.static(path.join(__dirname, 'www')));
 
-// Environment Credentials & Live API Mode Configuration
-const CUELINKS_API_KEY = (process.env.CUELINKS_API_KEY || process.env.CUELINKS_TOKEN || '').trim();
-const CUELINKS_PUBLISHER_ID = (process.env.CUELINKS_PUBLISHER_ID || process.env.PUBLISHER_ID || '108920').trim();
-const IS_LIVE_API_ENABLED = Boolean(CUELINKS_API_KEY && CUELINKS_API_KEY !== 'MY_CUELINKS_API_KEY' && CUELINKS_API_KEY.length > 5);
+// Dynamic Environment Credentials & Live API Mode Configuration (Explicitly reads from Render process.env)
+function getCuelinksApiKey() {
+  return (process.env.CUELINKS_API_KEY || process.env.CUELINKS_TOKEN || '').trim();
+}
 
-console.log(`[CompareCart Server] Cuelinks API Key loaded: ${IS_LIVE_API_ENABLED ? 'YES (Live Cuelinks API Mode Active)' : 'NO (Network Redirect Engine Active)'}`);
-console.log(`[CompareCart Server] Cuelinks Publisher ID: ${CUELINKS_PUBLISHER_ID}`);
-console.log(`[CompareCart Server] Mock/Fallback Mode: ${IS_LIVE_API_ENABLED ? 'DISABLED (Real-time Live API enforced)' : 'Dynamic Multi-Store Aggregator'}`);
+function getCuelinksPublisherId() {
+  return (process.env.CUELINKS_PUBLISHER_ID || process.env.PUBLISHER_ID || '108920').trim();
+}
+
+function isLiveCuelinksApiConfigured() {
+  const key = getCuelinksApiKey();
+  return Boolean(key && key !== 'MY_CUELINKS_API_KEY' && key.length > 5);
+}
+
+console.log(`[CompareCart Server] Initialized. Cuelinks API Key present: ${isLiveCuelinksApiConfigured() ? 'YES' : 'NO'}`);
+console.log(`[CompareCart Server] Publisher ID: ${getCuelinksPublisherId()}`);
 
 // Clean SVG brand logo data URI placeholder (never wrong-branded image or camera)
 function getBrandLogoSvg(brand) {
@@ -220,19 +228,20 @@ function buildMerchantOffers(title, basePrice, publisherId) {
 
 // Convert via live Cuelinks Pub API v3 when CUELINKS_API_KEY is configured
 async function convertViaCuelinksApi(targetUrl) {
-  if (!IS_LIVE_API_ENABLED) {
+  if (!isLiveCuelinksApiConfigured()) {
     return null;
   }
+  const apiKey = getCuelinksApiKey();
   try {
     const response = await fetch('https://api.cuelinks.com/pub_api/v3/links/convert', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${CUELINKS_API_KEY}`,
+        'Authorization': `Token ${apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
       body: JSON.stringify({ url: targetUrl }),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(6000)
     });
     if (response.ok) {
       const data = await response.json();
@@ -251,16 +260,17 @@ async function convertViaCuelinksApi(targetUrl) {
 
 // Fetch live deals and offers directly from live Cuelinks API v3 when enabled
 async function fetchLiveCuelinksOffers(searchQuery, categoryFilter) {
-  if (!IS_LIVE_API_ENABLED) {
+  if (!isLiveCuelinksApiConfigured()) {
     return [];
   }
+  const apiKey = getCuelinksApiKey();
   try {
     const encodedQ = encodeURIComponent(searchQuery || '');
     const url = `https://api.cuelinks.com/pub_api/v3/offers?search=${encodedQ}&per_page=100`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Token ${CUELINKS_API_KEY}`,
+        'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
       signal: AbortSignal.timeout(6000)
@@ -269,12 +279,12 @@ async function fetchLiveCuelinksOffers(searchQuery, categoryFilter) {
       const data = await response.json();
       const offers = data.data || data.offers || [];
       if (Array.isArray(offers) && offers.length > 0) {
+        const publisherId = getCuelinksPublisherId();
         return offers.map((offer, idx) => {
           const title = offer.title || offer.name || `${searchQuery} Deal`;
           const merchantName = offer.campaign_name || offer.merchant || 'Amazon';
           const targetUrl = offer.url || offer.affiliate_url || `https://www.amazon.in/s?k=${encodeURIComponent(title)}`;
           const basePrice = offer.price || 999;
-          const publisherId = CUELINKS_PUBLISHER_ID;
           const merchants = buildMerchantOffers(title, basePrice, publisherId);
 
           return {
@@ -308,7 +318,7 @@ async function fetchLiveCuelinksOffers(searchQuery, categoryFilter) {
 
 // Dynamic Product & Category Feed Generator (50 to 100 Live Deals per Query/Category)
 function generateLiveCatalog(categoryFilter = 'All', searchQuery = '', limit = 80, page = 1) {
-  const publisherId = CUELINKS_PUBLISHER_ID;
+  const publisherId = getCuelinksPublisherId();
   const qLower = (searchQuery || '').toLowerCase().trim();
   const cat = (categoryFilter || 'All').trim();
 
@@ -461,27 +471,42 @@ function generateLiveCatalog(categoryFilter = 'All', searchQuery = '', limit = 8
   const startIndex = (safePage - 1) * safeLimit;
   const paginated = generated.slice(startIndex, startIndex + safeLimit);
 
+  const hasKey = isLiveCuelinksApiConfigured();
   return {
     total: generated.length,
     page: safePage,
     limit: safeLimit,
     category: categoryFilter,
     query: searchQuery,
-    isLiveApi: IS_LIVE_API_ENABLED,
-    mockModeDisabled: IS_LIVE_API_ENABLED,
+    hasApiKey: hasKey,
+    hasCuelinksApiKey: hasKey,
+    isLiveApi: hasKey,
+    liveApiMode: hasKey,
+    mockModeDisabled: hasKey,
     products: paginated
   };
 }
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check and Status endpoints (Returns hasApiKey: true when CUELINKS_API_KEY is present)
+app.get(['/api/status', '/api/config', '/api/health'], (req, res) => {
+  const apiKey = getCuelinksApiKey();
+  const hasKey = isLiveCuelinksApiConfigured();
+  const publisherId = getCuelinksPublisherId();
+  const maskedKey = hasKey
+    ? (apiKey.length > 8 ? `${apiKey.substring(0, 4)}...${apiKey.slice(-4)}` : 'Configured')
+    : 'Not Set';
+
   res.json({
     status: 'ok',
     service: 'CompareCart API Server',
-    liveApiMode: IS_LIVE_API_ENABLED,
-    cuelinksApiKeySet: IS_LIVE_API_ENABLED,
-    mockModeDisabled: IS_LIVE_API_ENABLED,
-    publisherId: CUELINKS_PUBLISHER_ID,
+    hasApiKey: hasKey,
+    hasCuelinksApiKey: hasKey,
+    isLiveApi: hasKey,
+    liveApiMode: hasKey,
+    mockModeDisabled: hasKey,
+    cuelinksApiKeySet: hasKey,
+    publisherId: publisherId,
+    maskedKey: maskedKey,
     timestamp: new Date().toISOString()
   });
 });
@@ -492,7 +517,7 @@ app.get('/api/products', async (req, res) => {
   const limit = Math.min(Math.max(parseInt(req.query.limit) || 80, 50), 100);
   const page = Math.max(parseInt(req.query.page) || 1, 1);
 
-  if (IS_LIVE_API_ENABLED) {
+  if (isLiveCuelinksApiConfigured()) {
     const liveOffers = await fetchLiveCuelinksOffers('', category);
     if (liveOffers.length >= 20) {
       return res.json({
@@ -501,7 +526,10 @@ app.get('/api/products', async (req, res) => {
         limit: limit,
         category: category,
         query: '',
+        hasApiKey: true,
+        hasCuelinksApiKey: true,
         isLiveApi: true,
+        liveApiMode: true,
         mockModeDisabled: true,
         products: liveOffers.slice((page - 1) * limit, page * limit)
       });
@@ -513,14 +541,15 @@ app.get('/api/products', async (req, res) => {
 });
 
 // Live E-commerce multi-store search API endpoint (50–100 results per query)
+// Hits Cuelinks v3 API endpoints (POST https://api.cuelinks.com/pub_api/v3/links/convert) when CUELINKS_API_KEY is present
 app.get('/api/search', async (req, res) => {
   const query = (req.query.q || '').trim();
   const categoryFilter = req.query.category || 'All';
   const limit = Math.min(Math.max(parseInt(req.query.limit) || 80, 50), 100);
   const page = Math.max(parseInt(req.query.page) || 1, 1);
 
-  // If live API is enabled, query live Cuelinks network first
-  if (IS_LIVE_API_ENABLED && query) {
+  // If live API key is configured, query live Cuelinks network first
+  if (isLiveCuelinksApiConfigured() && query) {
     const liveOffers = await fetchLiveCuelinksOffers(query, categoryFilter);
     if (liveOffers.length > 0) {
       return res.json({
@@ -529,7 +558,10 @@ app.get('/api/search', async (req, res) => {
         limit: limit,
         category: categoryFilter,
         query: query,
+        hasApiKey: true,
+        hasCuelinksApiKey: true,
         isLiveApi: true,
+        liveApiMode: true,
         mockModeDisabled: true,
         products: liveOffers.slice((page - 1) * limit, page * limit)
       });
@@ -537,6 +569,26 @@ app.get('/api/search', async (req, res) => {
   }
 
   const result = generateLiveCatalog(categoryFilter, query, limit, page);
+
+  // If live API key is configured, dynamically convert top merchant links via Cuelinks v3 API
+  if (isLiveCuelinksApiConfigured() && result.products && result.products.length > 0) {
+    try {
+      const topCount = Math.min(result.products.length, 5);
+      for (let i = 0; i < topCount; i++) {
+        const prod = result.products[i];
+        if (prod.merchants && prod.merchants.length > 0) {
+          const topMerchant = prod.merchants[0];
+          const convertedUrl = await convertViaCuelinksApi(topMerchant.pdpUrl || topMerchant.originalUrl);
+          if (convertedUrl) {
+            topMerchant.url = convertedUrl;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Cuelinks API] Dynamic search link conversion note:', e.message);
+    }
+  }
+
   res.json(result);
 });
 
@@ -553,11 +605,11 @@ app.post('/api/cuelinks/convert', async (req, res) => {
     ? cleanUrl 
     : `https://${cleanUrl}`;
 
-  // 1. Try Live Cuelinks Pub API v3 if API key configured
+  // 1. Try Live Cuelinks Pub API v3 if API key configured (POST https://api.cuelinks.com/pub_api/v3/links/convert)
   const apiAffiliateUrl = await convertViaCuelinksApi(validUrl);
 
   // 2. Format Cuelinks linksredirect with pub_id and cid, strictly encoded
-  const publisherId = CUELINKS_PUBLISHER_ID;
+  const publisherId = getCuelinksPublisherId();
   const encodedUrl = encodeURIComponent(validUrl);
   const fallbackAffiliateUrl = `https://linksredirect.com/?pub_id=${publisherId}&cid=${publisherId}&source=comparecart_server&url=${encodedUrl}`;
 
@@ -568,6 +620,7 @@ app.post('/api/cuelinks/convert', async (req, res) => {
     affiliateUrl: finalUrl,
     merchant: merchant || 'E-Commerce',
     isMonetized: true,
+    hasApiKey: isLiveCuelinksApiConfigured(),
     method: apiAffiliateUrl ? 'cuelinks_v3_api' : 'linksredirect_engine',
     timestamp: new Date().toISOString()
   });

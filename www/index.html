@@ -731,7 +731,7 @@
         <div class="logo-badge">CC</div>
         <div class="brand-text">CompareCart<span>.in</span></div>
       </div>
-      <div class="cuelinks-badge">✓ Cuelinks v3 Verified</div>
+      <div class="cuelinks-badge" id="cuelinks-status-badge">✓ Cuelinks v3 Verified</div>
     </div>
 
     <!-- Clean Amazon-Style Search Box -->
@@ -1630,10 +1630,29 @@
       });
     });
 
+    // Query backend status endpoint to verify if CUELINKS_API_KEY is present on Render
+    async function checkBackendApiStatus() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/status`);
+        if (res.ok) {
+          const data = await res.json();
+          const badge = document.getElementById("cuelinks-status-badge");
+          if (badge && data && (data.hasApiKey || data.isLiveApi)) {
+            badge.textContent = "✓ Cuelinks v3 Live Active";
+            badge.style.color = "var(--asli-green)";
+            badge.style.background = "var(--asli-green-bg)";
+          }
+        }
+      } catch (e) {
+        console.warn("Backend status query skipped:", e);
+      }
+    }
+
     // Initial setup: Setup explore grid, initial render and fetch dynamic live backend catalog
     setupExploreGrid();
     render();
     loadLiveBackendCatalog("All");
+    checkBackendApiStatus();
   </script>
 </body>
 </html>
