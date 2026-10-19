@@ -162,6 +162,7 @@ object CuelinksAffiliateManager {
         try {
             val jsonPayload = JSONObject().apply {
                 put("url", cleanedUrl)
+                put("channel_id", "328934")
             }
 
             val request = Request.Builder()
@@ -181,53 +182,57 @@ object CuelinksAffiliateManager {
 
             if (response.isSuccessful && responseBody.isNotBlank()) {
                 val rootJson = JSONObject(responseBody)
-                val affiliateUrl = when {
-                    rootJson.has("affiliate_url") && !rootJson.isNull("affiliate_url") -> rootJson.getString("affiliate_url")
-                    rootJson.has("url") && !rootJson.isNull("url") -> rootJson.getString("url")
-                    rootJson.has("data") && rootJson.getJSONObject("data").has("affiliate_url") -> rootJson.getJSONObject("data").getString("affiliate_url")
-                    else -> null
-                }
+                // Verify response does not contain error or unapproved status
+                val hasError = rootJson.has("error") || rootJson.has("errors")
+                if (!hasError) {
+                    val affiliateUrl = when {
+                        rootJson.has("affiliate_url") && !rootJson.isNull("affiliate_url") -> rootJson.getString("affiliate_url")
+                        rootJson.has("url") && !rootJson.isNull("url") -> rootJson.getString("url")
+                        rootJson.has("data") && rootJson.getJSONObject("data").has("affiliate_url") -> rootJson.getJSONObject("data").getString("affiliate_url")
+                        else -> null
+                    }
 
-                if (!affiliateUrl.isNullOrBlank()) {
-                    return@withContext ConversionResult(
-                        originalUrl = cleanedUrl,
-                        finalUrl = affiliateUrl,
-                        isMonetized = true,
-                        merchantName = merchantName,
-                        message = "Cuelinks v3 API 200 OK — Link Monetized!",
-                        responseCode = statusCode,
-                        latencyMs = latency,
-                        maskedTokenUsed = maskedKey
-                    )
+                    if (!affiliateUrl.isNullOrBlank() && 
+                        !affiliateUrl.contains("unapproved", ignoreCase = true) && 
+                        !affiliateUrl.contains("error", ignoreCase = true)) {
+                        return@withContext ConversionResult(
+                            originalUrl = cleanedUrl,
+                            finalUrl = affiliateUrl,
+                            isMonetized = true,
+                            merchantName = merchantName,
+                            message = "Cuelinks v3 API 200 OK — Link Monetized!",
+                            responseCode = statusCode,
+                            latencyMs = latency,
+                            maskedTokenUsed = maskedKey
+                        )
+                    }
                 }
             }
 
-            // Fallback if API response didn't contain affiliate url
-            val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val fallbackTrackedUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart&url=$encodedTarget"
-
+            // CRUCIAL: Graceful Direct Redirect Fallback
+            // If Cuelinks returns any error, unapproved channel message, or failed status,
+            // DO NOT return the broken linksredirect.com URL.
+            // Instead, fallback immediately and return the ORIGINAL clean product URL so the 'Buy Now' button ALWAYS opens a valid product page.
+            Log.w(TAG, "Cuelinks returned error/unapproved, falling back to original clean product URL: $cleanedUrl")
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
-                finalUrl = fallbackTrackedUrl,
-                isMonetized = true,
+                finalUrl = cleanedUrl,
+                isMonetized = false,
                 merchantName = merchantName,
-                message = "Cuelinks HTTP $statusCode (Active Fallback Engaged)",
+                message = "Direct Clean URL (Graceful Fallback)",
                 responseCode = statusCode,
                 latencyMs = latency,
                 maskedTokenUsed = maskedKey
             )
         } catch (e: Exception) {
             val latency = System.currentTimeMillis() - startTime
-            Log.w(TAG, "Cuelinks network conversion fallback engaged: ${e.message}")
-            val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val offlineTrackedUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart&url=$encodedTarget"
-
+            Log.w(TAG, "Cuelinks network conversion failed, falling back to clean original URL: ${e.message}")
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
-                finalUrl = offlineTrackedUrl,
-                isMonetized = true,
+                finalUrl = cleanedUrl,
+                isMonetized = false,
                 merchantName = merchantName,
-                message = "Network Fallback Engaged.",
+                message = "Direct Clean URL (Offline Fallback)",
                 responseCode = 200,
                 latencyMs = latency,
                 maskedTokenUsed = maskedKey

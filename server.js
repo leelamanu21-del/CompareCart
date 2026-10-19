@@ -31,6 +31,10 @@ function getCuelinksPublisherId() {
   return (process.env.CUELINKS_PUBLISHER_ID || process.env.PUBLISHER_ID || '108920').trim();
 }
 
+function getCuelinksChannelId() {
+  return (process.env.CUELINKS_CHANNEL_ID || '328934').trim();
+}
+
 function isLiveCuelinksApiConfigured() {
   const key = getCuelinksApiKey();
   return Boolean(key && key !== 'MY_CUELINKS_API_KEY' && key.length > 5);
@@ -38,6 +42,7 @@ function isLiveCuelinksApiConfigured() {
 
 console.log(`[CompareCart Server] Initialized. Cuelinks API Key present: ${isLiveCuelinksApiConfigured() ? 'YES' : 'NO'}`);
 console.log(`[CompareCart Server] Publisher ID: ${getCuelinksPublisherId()}`);
+console.log(`[CompareCart Server] Channel ID: ${getCuelinksChannelId()}`);
 
 // Clean SVG brand logo data URI placeholder (never wrong-branded image or camera)
 function getBrandLogoSvg(brand) {
@@ -207,11 +212,8 @@ function buildMerchantOffers(title, basePrice, publisherId) {
 
   const offers = merchantDefs.map(m => {
     const price = Math.round(basePrice * m.priceFactor);
-    // Strictly validate PDP URL before encoding
+    // Strictly validate PDP URL
     const validPdp = m.pdpUrl.startsWith('https://') ? m.pdpUrl : `https://${m.pdpUrl}`;
-    // Strictly apply encodeURIComponent on target store URL before wrapping with Cuelinks redirect
-    const encodedTarget = encodeURIComponent(validPdp);
-    const cuelinksUrl = `https://linksredirect.com/?pub_id=${publisherId}&cid=${publisherId}&source=comparecart&url=${encodedTarget}`;
     return {
       name: m.name,
       merchantName: m.name,
@@ -219,7 +221,7 @@ function buildMerchantOffers(title, basePrice, publisherId) {
       currentPrice: price,
       pdpUrl: validPdp,
       originalUrl: validPdp,
-      url: cuelinksUrl
+      url: validPdp // Clean verified direct product landing page by default
     };
   });
 
@@ -227,12 +229,20 @@ function buildMerchantOffers(title, basePrice, publisherId) {
 }
 
 // Convert via live Cuelinks Pub API v3 when CUELINKS_API_KEY is configured
+// Explicitly injects dynamic channel_id (process.env.CUELINKS_CHANNEL_ID || "328934")
 async function convertViaCuelinksApi(targetUrl) {
   if (!isLiveCuelinksApiConfigured()) {
     return null;
   }
   const apiKey = getCuelinksApiKey();
+  const channelId = getCuelinksChannelId();
+
   try {
+    const payload = {
+      url: targetUrl,
+      channel_id: channelId
+    };
+
     const response = await fetch('https://api.cuelinks.com/pub_api/v3/links/convert', {
       method: 'POST',
       headers: {
@@ -240,20 +250,33 @@ async function convertViaCuelinksApi(targetUrl) {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ url: targetUrl }),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(6000)
     });
-    if (response.ok) {
-      const data = await response.json();
-      if (data && (data.affiliate_url || data.url)) {
-        return data.affiliate_url || data.url;
-      }
-      if (data && data.data && data.data.affiliate_url) {
-        return data.data.affiliate_url;
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn(`[Cuelinks API] Conversion HTTP ${response.status}: ${errText}`);
+      return null;
+    }
+
+    const data = await response.json();
+    // Validate response does not contain error or unapproved status
+    if (data.error || data.errors || (data.status && data.status !== 'success' && data.status !== 200)) {
+      console.warn('[Cuelinks API] Conversion returned error status:', data.error || data.errors || data.message);
+      return null;
+    }
+
+    const affiliateUrl = data.affiliate_url || data.url || (data.data && data.data.affiliate_url) || null;
+    if (affiliateUrl && typeof affiliateUrl === 'string' && affiliateUrl.startsWith('http')) {
+      const lower = affiliateUrl.toLowerCase();
+      // Ensure it is not an error string or unapproved channel warning
+      if (!lower.includes('unapproved') && !lower.includes('error') && !lower.includes('not_found')) {
+        return affiliateUrl;
       }
     }
   } catch (err) {
-    console.warn('[Cuelinks API] Direct Pub API v3 call failed, falling back to linksredirect engine:', err.message);
+    console.warn('[Cuelinks API] Direct Pub API v3 call failed, falling back to direct clean product URL:', err.message);
   }
   return null;
 }
@@ -592,8 +615,9 @@ app.get('/api/search', async (req, res) => {
   res.json(result);
 });
 
-// Cuelinks affiliate link conversion endpoint (Pub API v3 + linksredirect engine)
-app.post('/api/cuelinks/convert', async (req, res) => {
+// Cuelinks affiliate link conversion endpoint (Pub API v3 + graceful direct URL fallback)
+// Handles both /api/convert and /api/cuelinks/convert
+app.post(['/api/convert', '/api/cuelinks/convert'], async (req, res) => {
   const { url, merchant } = req.body;
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
@@ -605,23 +629,56 @@ app.post('/api/cuelinks/convert', async (req, res) => {
     ? cleanUrl 
     : `https://${cleanUrl}`;
 
-  // 1. Try Live Cuelinks Pub API v3 if API key configured (POST https://api.cuelinks.com/pub_api/v3/links/convert)
-  const apiAffiliateUrl = await convertViaCuelinksApi(validUrl);
+  const hasApiKey = isLiveCuelinksApiConfigured();
 
-  // 2. Format Cuelinks linksredirect with pub_id and cid, strictly encoded
+  // 1. If Live Cuelinks API key is configured, convert via live Cuelinks Pub API v3
+  if (hasApiKey) {
+    const apiAffiliateUrl = await convertViaCuelinksApi(validUrl);
+    if (apiAffiliateUrl) {
+      return res.json({
+        originalUrl: validUrl,
+        affiliateUrl: apiAffiliateUrl,
+        url: apiAffiliateUrl,
+        merchant: merchant || 'E-Commerce',
+        isMonetized: true,
+        hasApiKey: true,
+        method: 'cuelinks_v3_api',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 2. CRUCIAL: Graceful Direct Redirect Fallback
+    // If Cuelinks returns any error, unapproved channel message, or failed status,
+    // DO NOT return the broken linksredirect.com URL.
+    // Instead, fallback immediately and return the ORIGINAL clean product URL so the 'Buy Now' button ALWAYS opens a valid product page.
+    console.warn(`[Cuelinks API] Conversion returned error/unapproved or failed. Gracefully falling back to clean direct product URL: ${validUrl}`);
+    return res.json({
+      originalUrl: validUrl,
+      affiliateUrl: validUrl,
+      url: validUrl,
+      merchant: merchant || 'E-Commerce',
+      isMonetized: false,
+      hasApiKey: true,
+      fallbackEngaged: true,
+      method: 'clean_direct_fallback',
+      message: 'Direct product page opened safely without error screen',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // 3. When no live API key is configured, wrap with strictly encoded publisher redirect
   const publisherId = getCuelinksPublisherId();
   const encodedUrl = encodeURIComponent(validUrl);
   const fallbackAffiliateUrl = `https://linksredirect.com/?pub_id=${publisherId}&cid=${publisherId}&source=comparecart_server&url=${encodedUrl}`;
 
-  const finalUrl = apiAffiliateUrl || fallbackAffiliateUrl;
-
   res.json({
     originalUrl: validUrl,
-    affiliateUrl: finalUrl,
+    affiliateUrl: fallbackAffiliateUrl,
+    url: fallbackAffiliateUrl,
     merchant: merchant || 'E-Commerce',
     isMonetized: true,
-    hasApiKey: isLiveCuelinksApiConfigured(),
-    method: apiAffiliateUrl ? 'cuelinks_v3_api' : 'linksredirect_engine',
+    hasApiKey: false,
+    method: 'linksredirect_engine',
     timestamp: new Date().toISOString()
   });
 });
