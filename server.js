@@ -200,14 +200,15 @@ function buildMerchantOffers(title, basePrice, publisherId) {
   const merchantDefs = [
     { name: 'Amazon', priceFactor: 1.0, pdpUrl: `https://www.amazon.in/s?k=${encodedTitle}` },
     { name: 'Flipkart', priceFactor: 1.02, pdpUrl: `https://www.flipkart.com/search?q=${encodedTitle}` },
-    { name: 'Croma', priceFactor: 1.03, pdpUrl: `https://www.croma.com/searchB?q=${encodedTitle}` },
-    { name: 'Reliance Digital', priceFactor: 1.025, pdpUrl: `https://www.reliancedigital.in/search?q=${encodedTitle}:relevance` },
+    { name: 'Snapdeal', priceFactor: 0.95, pdpUrl: `https://www.snapdeal.com/search?keyword=${encodedTitle}` },
     { name: 'Tata CLiQ', priceFactor: 1.035, pdpUrl: `https://www.tatacliq.com/search/?searchCategory=all&text=${encodedTitle}` },
     { name: 'Myntra', priceFactor: 1.015, pdpUrl: `https://www.myntra.com/${encodeURIComponent(shortSlug)}?rawQuery=${encodedTitle}` },
+    { name: 'JioMart', priceFactor: 0.96, pdpUrl: `https://www.jiomart.com/search/${encodedTitle}` },
+    { name: 'Croma', priceFactor: 1.03, pdpUrl: `https://www.croma.com/searchB?q=${encodedTitle}` },
+    { name: 'Reliance Digital', priceFactor: 1.025, pdpUrl: `https://www.reliancedigital.in/search?q=${encodedTitle}:relevance` },
     { name: 'Ajio', priceFactor: 1.03, pdpUrl: `https://www.ajio.com/search/?text=${encodedTitle}` },
     { name: 'Meesho', priceFactor: 0.94, pdpUrl: `https://www.meesho.com/search?q=${encodedTitle}` },
-    { name: 'Nykaa', priceFactor: 1.04, pdpUrl: `https://www.nykaa.com/search/result/?q=${encodedTitle}` },
-    { name: 'JioMart', priceFactor: 0.96, pdpUrl: `https://www.jiomart.com/search/${encodedTitle}` }
+    { name: 'Nykaa', priceFactor: 1.04, pdpUrl: `https://www.nykaa.com/search/result/?q=${encodedTitle}` }
   ];
 
   const offers = merchantDefs.map(m => {
