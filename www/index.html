@@ -92,6 +92,12 @@
       color: var(--amazon-orange);
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .cuelinks-badge {
       font-size: 11px;
       font-weight: 700;
@@ -100,15 +106,142 @@
       padding: 4px 8px;
       border-radius: 12px;
       border: 1px solid rgba(6, 125, 98, 0.2);
+      white-space: nowrap;
     }
 
+    /* Header Auth Options & Profile Dropdown */
+    .auth-wrapper {
+      position: relative;
+    }
+
+    .login-header-btn {
+      background: var(--amazon-navy);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .login-header-btn:hover {
+      background: var(--amazon-teal);
+    }
+
+    .user-profile-btn {
+      background: var(--surface-light);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 3px 8px 3px 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .user-profile-btn:hover {
+      border-color: var(--amazon-teal);
+    }
+
+    .user-avatar-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--amazon-teal);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-profile-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dark);
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .auth-dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 36px;
+      background: #FFFFFF;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      min-width: 200px;
+      z-index: 2500;
+      padding: 6px 0;
+      display: none;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .auth-dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-user-header {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border-divider);
+    }
+
+    .dropdown-user-header .user-title {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .dropdown-user-header .user-email {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-dark);
+      word-break: break-all;
+    }
+
+    .auth-dropdown-item {
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--text-dark);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .auth-dropdown-item:hover {
+      background: var(--surface-light);
+      color: var(--amazon-teal);
+    }
+
+    .auth-dropdown-item.danger {
+      color: #DC2626;
+      border-top: 1px solid var(--border-divider);
+    }
+
+    .auth-dropdown-item.danger:hover {
+      background: #FEE2E2;
+    }
+
+    /* Search Box & Submit Button */
     .search-box {
       display: flex;
       align-items: center;
       background: var(--surface-white);
       border: 1.5px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 6px 12px;
+      padding: 4px 4px 4px 10px;
       gap: 8px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -140,6 +273,144 @@
       display: none;
       font-size: 16px;
       padding: 0 4px;
+    }
+
+    .search-submit-btn {
+      background: var(--amazon-orange);
+      color: #111827;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .search-submit-btn:hover {
+      background: #FA8900;
+    }
+
+    /* Modal Overlay */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(2px);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .auth-modal-card {
+      background: #FFFFFF;
+      border-radius: 14px;
+      max-width: 380px;
+      width: 100%;
+      padding: 22px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+      animation: modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .auth-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .auth-modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .auth-modal-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .auth-modal-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .google-sign-in-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: var(--text-dark);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .google-sign-in-btn:hover {
+      background: #F8FAFC;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      margin: 14px 0;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .auth-divider::before, .auth-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border-divider);
+    }
+
+    .auth-divider span {
+      padding: 0 8px;
+    }
+
+    .otp-btn {
+      background: var(--amazon-teal);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .instant-guest-btn {
+      background: none;
+      border: none;
+      color: var(--amazon-teal);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
     }
 
     /* Live Auto-Suggestions Strip */
@@ -725,24 +996,33 @@
 <body>
 
   <!-- Top Amazon Search Header -->
+  <!-- Top Amazon Search Header with Auth State -->
   <header>
     <div class="brand-row">
-      <div class="brand-logo">
+      <div class="brand-logo" onclick="switchCategory('All')" style="cursor: pointer;">
         <div class="logo-badge">CC</div>
         <div class="brand-text">CompareCart<span>.in</span></div>
       </div>
-      <div class="cuelinks-badge" id="cuelinks-status-badge">✓ Cuelinks v3 Verified</div>
+      <div class="header-actions">
+        <div class="cuelinks-badge" id="cuelinks-status-badge">✓ Cuelinks v3 Verified</div>
+        
+        <!-- Conditional Auth Container (Login button or Avatar + Dropdown) -->
+        <div class="auth-wrapper" id="auth-wrapper">
+          <!-- Rendered dynamically by renderAuthHeader() -->
+        </div>
+      </div>
     </div>
 
     <!-- Clean Amazon-Style Search Box -->
-    <div class="search-box">
+    <form class="search-box" id="search-form" onsubmit="event.preventDefault(); submitSearch();">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      <input type="text" id="search-input" placeholder="Search CompareCart.in (shoes, t-shirt, rice, mobile...)" autocomplete="off">
-      <button class="clear-search-btn" id="clear-search-btn" aria-label="Clear Search">✕</button>
-    </div>
+      <input type="text" id="search-input" placeholder="Search CompareCart.in (asus, iphone, puma, shoes...)" autocomplete="off">
+      <button type="button" class="clear-search-btn" id="clear-search-btn" aria-label="Clear Search">✕</button>
+      <button type="submit" class="search-submit-btn" id="search-submit-btn" aria-label="Search">Search</button>
+    </form>
   </header>
 
   <!-- Live Auto-Suggestions Strip -->
@@ -1561,7 +1841,22 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // 1. Search with 500ms Debounce (Optimized to prevent continuous network requests and lag)
+    // URL Query Sync & Instant Search Submission
+    async function submitSearch() {
+      clearTimeout(debounceTimer);
+      const val = searchInput.value.trim();
+      searchQuery = val;
+      if (val) {
+        window.history.replaceState({}, '', `?q=${encodeURIComponent(val)}`);
+      } else {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+      searchLoader.style.display = "flex";
+      await performLiveSearch(val);
+      searchLoader.style.display = "none";
+    }
+
+    // 1. Search with Debounce & URL Sync
     const searchInput = document.getElementById("search-input");
     const searchLoader = document.getElementById("search-loader");
 
@@ -1574,7 +1869,12 @@
       }
 
       debounceTimer = setTimeout(async () => {
-        searchQuery = val;
+        searchQuery = val.trim();
+        if (searchQuery) {
+          window.history.replaceState({}, '', `?q=${encodeURIComponent(searchQuery)}`);
+        } else {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
         await performLiveSearch(val);
         searchLoader.style.display = "none";
       }, 500);
@@ -1585,6 +1885,7 @@
       searchInput.value = "";
       searchQuery = "";
       liveSearchResults = null;
+      window.history.replaceState({}, '', window.location.pathname);
       searchLoader.style.display = "none";
       render();
     });
@@ -1595,6 +1896,7 @@
         const text = pill.textContent.trim();
         searchInput.value = text;
         searchQuery = text;
+        window.history.replaceState({}, '', `?q=${encodeURIComponent(text)}`);
         switchTab("home");
         searchLoader.style.display = "flex";
         await performLiveSearch(text);
@@ -1616,6 +1918,7 @@
       searchQuery = "";
       liveSearchResults = null;
       currentCategory = "All";
+      window.history.replaceState({}, '', window.location.pathname);
       document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
       document.querySelector('.pill[data-category="All"]').classList.add("active");
       loadLiveBackendCatalog("All");
@@ -1629,6 +1932,123 @@
         switchTab(tabName);
       });
     });
+
+    // Auth State Management
+    let currentUser = null;
+    try {
+      currentUser = JSON.parse(localStorage.getItem('comparecart_user') || 'null');
+    } catch (e) {
+      currentUser = null;
+    }
+
+    function renderAuthHeader() {
+      const wrapper = document.getElementById("auth-wrapper");
+      if (!wrapper) return;
+
+      if (!currentUser) {
+        // Logged Out State: Show Login Button
+        wrapper.innerHTML = `
+          <button class="login-header-btn" onclick="openAuthModal()" aria-label="Sign In">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Login</span>
+          </button>
+        `;
+      } else {
+        // Logged In State: Show Avatar with Dropdown
+        const initials = currentUser.avatar || (currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CC');
+        const firstName = currentUser.name ? currentUser.name.split(' ')[0] : 'Account';
+
+        wrapper.innerHTML = `
+          <button class="user-profile-btn" onclick="toggleAuthDropdown(event)" aria-label="User Menu">
+            <div class="user-avatar-circle">${initials}</div>
+            <span class="user-profile-name">${firstName}</span>
+            <span style="font-size: 9px; color: var(--text-muted);">▼</span>
+          </button>
+
+          <div class="auth-dropdown-menu" id="auth-dropdown-menu">
+            <div class="dropdown-user-header">
+              <div class="user-title">Signed in as</div>
+              <div class="user-email">${currentUser.email || 'user@comparecart.in'}</div>
+            </div>
+            <div class="auth-dropdown-item" onclick="switchTab('account'); closeAuthDropdown();">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>My Profile & Alerts</span>
+            </div>
+            <div class="auth-dropdown-item" onclick="switchTab('cards'); closeAuthDropdown();">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <span>Saved Cards & Savings</span>
+            </div>
+            <div class="auth-dropdown-item danger" onclick="signOut()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Sign Out</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function toggleAuthDropdown(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById("auth-dropdown-menu");
+      if (menu) {
+        menu.classList.toggle("show");
+      }
+    }
+
+    function closeAuthDropdown() {
+      const menu = document.getElementById("auth-dropdown-menu");
+      if (menu) {
+        menu.classList.remove("show");
+      }
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener("click", (e) => {
+      const wrapper = document.getElementById("auth-wrapper");
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeAuthDropdown();
+      }
+    });
+
+    function openAuthModal() {
+      const modal = document.getElementById("auth-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById("auth-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function demoLogin(type) {
+      let name = 'Rahul Sharma';
+      let email = 'rahul.sharma@gmail.com';
+      if (type === 'Mobile') {
+        const tel = document.getElementById('mobile-input')?.value.trim();
+        if (tel) {
+          name = 'Shopper (+91)';
+          email = `${tel.replace(/[^0-9]/g, '')}@comparecart.in`;
+        }
+      }
+      currentUser = {
+        name: name,
+        email: email,
+        avatar: name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+      };
+      localStorage.setItem('comparecart_user', JSON.stringify(currentUser));
+      renderAuthHeader();
+      closeAuthModal();
+    }
+
+    function signOut() {
+      currentUser = null;
+      localStorage.removeItem('comparecart_user');
+      closeAuthDropdown();
+      renderAuthHeader();
+    }
 
     // Query backend status endpoint to verify if CUELINKS_API_KEY is present on Render
     async function checkBackendApiStatus() {
@@ -1648,11 +2068,57 @@
       }
     }
 
-    // Initial setup: Setup explore grid, initial render and fetch dynamic live backend catalog
+    // Initial setup: check URL params, initial render, catalog and auth
     setupExploreGrid();
+    renderAuthHeader();
     render();
-    loadLiveBackendCatalog("All");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQ = urlParams.get('q');
+    if (initialQ && initialQ.trim()) {
+      searchInput.value = initialQ.trim();
+      searchQuery = initialQ.trim();
+      searchLoader.style.display = "flex";
+      performLiveSearch(initialQ.trim()).then(() => {
+        searchLoader.style.display = "none";
+      });
+    } else {
+      loadLiveBackendCatalog("All");
+    }
+
     checkBackendApiStatus();
   </script>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="auth-modal" style="display: none;" onclick="if(event.target === this) closeAuthModal()">
+    <div class="auth-modal-card">
+      <div class="auth-modal-header">
+        <div class="auth-modal-title">Sign in to CompareCart</div>
+        <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
+      </div>
+      <p class="auth-modal-subtitle">Track price drops across 10+ Indian stores, view verified Asli discounts, and save extra with card offers.</p>
+      
+      <div class="auth-modal-body">
+        <button class="google-sign-in-btn" onclick="demoLogin('Google')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="auth-divider"><span>OR</span></div>
+
+        <div class="mobile-otp-box">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; display: block;">Mobile Number (Instant OTP)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="tel" id="mobile-input" placeholder="+91 98765 43210" style="flex: 1; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 13px;">
+            <button class="otp-btn" onclick="demoLogin('Mobile')">Get OTP</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: center;">
+          <button class="instant-guest-btn" onclick="demoLogin('Guest')">Quick Sign In as Rahul Sharma</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

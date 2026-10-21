@@ -117,7 +117,14 @@ function resolveBrandImages(brand, title, category) {
       brandLogo: getBrandLogoSvg('boAt')
     };
   }
-  if (t.includes('laptop') || t.includes('macbook') || b.includes('dell') || b.includes('hp') || b.includes('lenovo')) {
+  if (b.includes('asus') || t.includes('asus')) {
+    return {
+      image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&auto=format&fit=crop&q=80',
+      secondaryImage: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80',
+      brandLogo: getBrandLogoSvg('ASUS')
+    };
+  }
+  if (t.includes('laptop') || t.includes('macbook') || b.includes('dell') || b.includes('hp') || b.includes('lenovo') || b.includes('acer')) {
     return {
       image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&auto=format&fit=crop&q=80',
       secondaryImage: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&auto=format&fit=crop&q=80',
@@ -347,48 +354,90 @@ function generateLiveCatalog(categoryFilter = 'All', searchQuery = '', limit = 8
   const cat = (categoryFilter || 'All').trim();
 
   const categoryPresets = {
-    'Fashion': {
-      brands: ['Puma', 'Nike', 'Adidas', 'Sparx', 'Red Tape', "Levi's", 'Allen Solly', 'Campus', 'Woodland', 'Fossil'],
-      items: ['Smashic Low-Top Sneakers', 'Air Monarch Cross-Trainers', 'Superstar Classic Shoes', 'Slim Fit Stretch Denim Jeans', 'Regular Fit Solid Polo T-Shirt', 'Chronograph Blue Dial Watch', 'Casual Streetwear Hoodie', 'Retro Runner Walking Shoes', 'Running Performance Sneaker', 'Cotton Chino Trousers'],
-      basePrice: 1899,
-      mrpFactor: 1.6
-    },
-    'Electronics': {
-      brands: ['Apple', 'Samsung', 'Sony', 'boAt', 'OnePlus', 'Dell', 'Noise', 'Spigen', 'HP', 'Realme'],
-      items: ['iPhone 16 (128GB Ultramarine)', 'Galaxy S24 Ultra (256GB)', 'WH-1000XM5 ANC Headphones', 'Airdopes 141 TWS Earbuds', '15.6-inch Core i5 Laptop', 'ColorFit Pro 5 Smartwatch', 'Ultra Hybrid Matte Shockproof Case', '100W Fast Type-C GaN Charger', '27-inch 4K HDR Gaming Monitor', 'Soundbar with Wireless Subwoofer'],
-      basePrice: 14990,
-      mrpFactor: 1.35
-    },
-    'Home & Kitchen': {
-      brands: ['Prestige', 'Hawkins', 'Philips', 'Bajaj', 'Pigeon', 'Wonderchef', 'Borosil', 'Milton', 'Cello', 'Morphy Richards'],
-      items: ['Svachh Triply Hard Anodised Pressure Cooker 3L', 'Digital Air Fryer HD9200 4.1L', 'Futura Hard Anodised Deep Kadai', '750W 4-Jar Mixer Grinder', 'Electromagnetic Induction Cooktop', 'Non-stick Granite Cookware 3-Piece Set', 'Stainless Steel 1.5L Electric Kettle', 'Smart Multi-Stage Water Purifier', '2-Slice Pop-Up Toaster', 'Hand Blender with Chopper Attachment'],
-      basePrice: 2499,
-      mrpFactor: 1.45
-    },
-    'Groceries': {
-      brands: ['Daawat', 'Fortune', 'India Gate', 'Aashirvaad', 'Tata Sampann', 'Happilo', 'Dhara', 'Saffola', 'Nutraj', 'Patanjali'],
-      items: ['Biryani Basmati Rice 5 Kg (Longest Grain)', 'Sunlite Refined Sunflower Oil 1L Pouch', 'Sharbati Whole Wheat Atta 10 Kg', '100% California Whole Almonds 500g', 'Unpolished High Protein Toor Dal 1 Kg', 'Pure Desi Cow Ghee 1L Tin', 'W320 Premium Cashews 500g', 'Cold Pressed Extra Virgin Olive Oil 1L', 'Raw Organic Wild Forest Honey 500g', 'Organic Green Tea Detox 100 Tea Bags'],
-      basePrice: 599,
-      mrpFactor: 1.3
-    },
-    'Beauty': {
-      brands: ['Minimalist', 'The Derma Co', 'Plum', 'Mamaearth', 'Cetaphil', 'Nykaa Cosmetics', "L'Oreal", 'Biotique', 'Neutrogena', 'Dot & Key'],
-      items: ['10% Niacinamide Face Serum with Zinc 30ml', '1% Hyaluronic Sunscreen Aqua Gel SPF 50', '2% Salicylic Acid Face Serum 30ml', 'Gentle Skin Cleanser for Sensitive Skin 250ml', 'Vitamin C Brightening Face Cream 50g', 'Rosemary Hair Growth Serum 50ml', 'Hydrating Lip Sleeping Mask 20g', 'Ceramide Barrier Repair Moisturizer 50g', 'Tea Tree Purifying Face Wash 100ml', 'Waterproof Liquid Matte Lipstick'],
-      basePrice: 499,
-      mrpFactor: 1.35
-    },
-    'Books': {
-      brands: ['James Clear', 'Morgan Housel', 'Robert Kiyosaki', 'Hector Garcia', 'Cal Newport', 'Daniel Kahneman', 'Mark Manson', 'Peter Thiel', 'Yuval Noah Harari', 'Paulo Coelho'],
-      items: ['Atomic Habits: Proven Way to Build Good Habits', 'The Psychology of Money: Timeless Lessons', 'Rich Dad Poor Dad: Personal Finance Classic', 'Ikigai: The Japanese Secret to Long & Happy Life', 'Deep Work: Rules for Focused Success', 'Thinking, Fast and Slow (Global Bestseller)', 'The Subtle Art of Not Giving a F*ck', 'Zero to One: Notes on Startups', 'Sapiens: A Brief History of Humankind', 'The Alchemist (Complete & Unabridged)'],
-      basePrice: 349,
-      mrpFactor: 1.5
-    },
-    'Daily Essentials': {
-      brands: ['Dettol', 'Surf Excel', 'Ariel', 'Vim', 'Lifebuoy', 'Savlon', 'Lizol', 'Colin', 'Godrej', 'Harpic'],
-      items: ['Original Germ Protection Liquid Handwash Refill 1500ml', 'Matic Top Load Liquid Detergent Pouch 2L', 'Dishwash Liquid Gel Lemon 750ml Bottle', 'All-in-One Disinfectant Surface Cleaner 2L', 'Antibacterial Bathing Soap Bar 4x125g Pack', 'Power Plus Disinfectant Toilet Cleaner 1L', 'Glass and Multi-Surface Cleaner Spray 500ml', 'Multipurpose Kitchen Paper Towels 4 Rolls', 'Biodegradable Heavy Duty Garbage Bags 60 Bags', 'Fast Action Mosquito Repellent Refill Pack of 4'],
-      basePrice: 289,
-      mrpFactor: 1.35
-    }
+    'Fashion': [
+      { brand: 'Puma', title: 'Puma Smashic Low-Top Sneakers', basePrice: 1899, mrpFactor: 1.6 },
+      { brand: 'Nike', title: 'Nike Air Monarch Cross-Trainers', basePrice: 3499, mrpFactor: 1.5 },
+      { brand: 'Adidas', title: 'Adidas Superstar Classic Originals', basePrice: 4299, mrpFactor: 1.5 },
+      { brand: 'Sparx', title: 'Sparx Retro Runner Walking Shoes', basePrice: 899, mrpFactor: 1.4 },
+      { brand: 'Red Tape', title: 'Red Tape Running Performance Sneakers', basePrice: 1399, mrpFactor: 1.8 },
+      { brand: "Levi's", title: "Levi's 511 Slim Fit Stretch Denim Jeans", basePrice: 2299, mrpFactor: 1.5 },
+      { brand: 'Allen Solly', title: 'Allen Solly Regular Fit Solid Polo T-Shirt', basePrice: 999, mrpFactor: 1.5 },
+      { brand: 'Campus', title: 'Campus Running Sports Shoes for Men', basePrice: 849, mrpFactor: 1.4 },
+      { brand: 'Woodland', title: 'Woodland Waterproof Leather Trekking Shoes', basePrice: 3495, mrpFactor: 1.3 },
+      { brand: 'Fossil', title: 'Fossil Grant Chronograph Blue Dial Watch', basePrice: 6995, mrpFactor: 1.4 }
+    ],
+    'Electronics': [
+      { brand: 'Apple', title: 'Apple iPhone 16 (128GB Ultramarine)', basePrice: 79900, mrpFactor: 1.1 },
+      { brand: 'Samsung', title: 'Samsung Galaxy S24 Ultra (256GB Titanium)', basePrice: 119999, mrpFactor: 1.15 },
+      { brand: 'Sony', title: 'Sony WH-1000XM5 ANC Wireless Headphones', basePrice: 26990, mrpFactor: 1.3 },
+      { brand: 'boAt', title: 'boAt Airdopes 141 TWS Earbuds 42H Playtime', basePrice: 1299, mrpFactor: 2.2 },
+      { brand: 'OnePlus', title: 'OnePlus Nord CE 4 5G (8GB RAM, 128GB)', basePrice: 24999, mrpFactor: 1.2 },
+      { brand: 'Dell', title: 'Dell Inspiron 15 3520 Intel Core i5 12th Gen Laptop', basePrice: 44990, mrpFactor: 1.3 },
+      { brand: 'Noise', title: 'Noise ColorFit Pro 5 1.85-inch Smartwatch', basePrice: 2499, mrpFactor: 2.0 },
+      { brand: 'Spigen', title: 'Spigen Ultra Hybrid Matte Shockproof Case', basePrice: 1299, mrpFactor: 1.5 },
+      { brand: 'HP', title: 'HP Victus 15.6-inch Gaming Laptop (Core i5 / RTX 2050)', basePrice: 52990, mrpFactor: 1.3 },
+      { brand: 'ASUS', title: 'ASUS Vivobook 15 Intel Core i5 12th Gen Laptop', basePrice: 42990, mrpFactor: 1.35 }
+    ],
+    'Home & Kitchen': [
+      { brand: 'Prestige', title: 'Prestige Svachh Triply Hard Anodised Pressure Cooker 3L', basePrice: 2399, mrpFactor: 1.4 },
+      { brand: 'Philips', title: 'Philips Digital Air Fryer HD9200 4.1L', basePrice: 5999, mrpFactor: 1.45 },
+      { brand: 'Hawkins', title: 'Hawkins Futura Hard Anodised Deep Kadai with Lid', basePrice: 1899, mrpFactor: 1.3 },
+      { brand: 'Bajaj', title: 'Bajaj Rex 750W 4-Jar Mixer Grinder', basePrice: 2899, mrpFactor: 1.4 },
+      { brand: 'Pigeon', title: 'Pigeon Cruise 1800W Induction Cooktop', basePrice: 1499, mrpFactor: 1.8 },
+      { brand: 'Wonderchef', title: 'Wonderchef Granite Non-stick 3-Piece Cookware Set', basePrice: 2499, mrpFactor: 1.6 },
+      { brand: 'Milton', title: 'Milton Stainless Steel 1.5L Electric Kettle', basePrice: 799, mrpFactor: 1.5 },
+      { brand: 'Borosil', title: 'Borosil Glass 2-Slice Pop-Up Toaster', basePrice: 1599, mrpFactor: 1.4 },
+      { brand: 'Morphy Richards', title: 'Morphy Richards Pronto Ultra Hand Blender', basePrice: 1299, mrpFactor: 1.5 },
+      { brand: 'Cello', title: 'Cello Infusio Vacuum Insulated Flask 1L', basePrice: 699, mrpFactor: 1.4 }
+    ],
+    'Groceries': [
+      { brand: 'Daawat', title: 'Daawat Biryani Basmati Rice 5 Kg (Longest Grain)', basePrice: 799, mrpFactor: 1.3 },
+      { brand: 'Fortune', title: 'Fortune Sunlite Refined Sunflower Oil 1L Pouch', basePrice: 135, mrpFactor: 1.2 },
+      { brand: 'Aashirvaad', title: 'Aashirvaad Sharbati Whole Wheat Atta 10 Kg', basePrice: 499, mrpFactor: 1.2 },
+      { brand: 'Happilo', title: 'Happilo 100% California Premium Whole Almonds 500g', basePrice: 449, mrpFactor: 1.4 },
+      { brand: 'Tata Sampann', title: 'Tata Sampann Unpolished High Protein Toor Dal 1 Kg', basePrice: 189, mrpFactor: 1.25 },
+      { brand: 'India Gate', title: 'India Gate Classic Basmati Rice 1 Kg', basePrice: 220, mrpFactor: 1.2 },
+      { brand: 'Nutraj', title: 'Nutraj W320 Premium Cashews 500g', basePrice: 499, mrpFactor: 1.4 },
+      { brand: 'Saffola', title: 'Saffola Gold Pro Healthy Lifestyle Edible Oil 5L', basePrice: 849, mrpFactor: 1.25 },
+      { brand: 'Patanjali', title: 'Patanjali Pure Desi Cow Ghee 1L Tin', basePrice: 650, mrpFactor: 1.15 },
+      { brand: 'Organic India', title: 'Organic India Tulsi Green Tea Detox 100 Bags', basePrice: 420, mrpFactor: 1.3 }
+    ],
+    'Beauty': [
+      { brand: 'Minimalist', title: 'Minimalist 10% Niacinamide Face Serum with Zinc 30ml', basePrice: 599, mrpFactor: 1.2 },
+      { brand: 'The Derma Co', title: 'The Derma Co 1% Hyaluronic Sunscreen Aqua Gel SPF 50', basePrice: 449, mrpFactor: 1.3 },
+      { brand: 'Plum', title: 'Plum 2% Salicylic Acid Face Serum 30ml', basePrice: 499, mrpFactor: 1.3 },
+      { brand: 'Cetaphil', title: 'Cetaphil Gentle Skin Cleanser for Sensitive Skin 250ml', basePrice: 580, mrpFactor: 1.2 },
+      { brand: 'Mamaearth', title: 'Mamaearth Vitamin C Brightening Daily Face Cream 50g', basePrice: 399, mrpFactor: 1.3 },
+      { brand: 'Nykaa Cosmetics', title: 'Nykaa Matte to Last Liquid Lipstick', basePrice: 349, mrpFactor: 1.4 },
+      { brand: "L'Oreal", title: "L'Oreal Paris Extraordinary Oil Hair Serum 100ml", basePrice: 499, mrpFactor: 1.3 },
+      { brand: 'Biotique', title: 'Biotique Bio Dandelion Visibly Ageless Serum 190ml', basePrice: 299, mrpFactor: 1.4 },
+      { brand: 'Neutrogena', title: 'Neutrogena Hydro Boost Water Gel Moisturizer 50g', basePrice: 799, mrpFactor: 1.25 },
+      { brand: 'Dot & Key', title: 'Dot & Key Ceramide Barrier Repair Hydrating Cream 100g', basePrice: 395, mrpFactor: 1.3 }
+    ],
+    'Books': [
+      { brand: 'James Clear', title: 'Atomic Habits: Proven Way to Build Good Habits', basePrice: 449, mrpFactor: 1.5 },
+      { brand: 'Morgan Housel', title: 'The Psychology of Money: Timeless Financial Lessons', basePrice: 349, mrpFactor: 1.5 },
+      { brand: 'Robert Kiyosaki', title: 'Rich Dad Poor Dad: What the Rich Teach Their Kids', basePrice: 399, mrpFactor: 1.4 },
+      { brand: 'Hector Garcia', title: 'Ikigai: The Japanese Secret to Long & Happy Life', basePrice: 349, mrpFactor: 1.4 },
+      { brand: 'Cal Newport', title: 'Deep Work: Rules for Focused Success in a Distracted World', basePrice: 399, mrpFactor: 1.5 },
+      { brand: 'Daniel Kahneman', title: 'Thinking, Fast and Slow (Global Bestseller)', basePrice: 499, mrpFactor: 1.4 },
+      { brand: 'Mark Manson', title: 'The Subtle Art of Not Giving a F*ck', basePrice: 349, mrpFactor: 1.5 },
+      { brand: 'Peter Thiel', title: 'Zero to One: Notes on Startups and Future', basePrice: 399, mrpFactor: 1.5 },
+      { brand: 'Yuval Noah Harari', title: 'Sapiens: A Brief History of Humankind', basePrice: 499, mrpFactor: 1.4 },
+      { brand: 'Paulo Coelho', title: 'The Alchemist: Complete & Unabridged Classic', basePrice: 299, mrpFactor: 1.5 }
+    ],
+    'Daily Essentials': [
+      { brand: 'Dettol', title: 'Dettol Original Germ Protection Liquid Handwash Refill 1500ml', basePrice: 249, mrpFactor: 1.3 },
+      { brand: 'Surf Excel', title: 'Surf Excel Matic Top Load Liquid Detergent Pouch 2L', basePrice: 399, mrpFactor: 1.25 },
+      { brand: 'Vim', title: 'Vim Dishwash Liquid Gel Lemon 750ml Bottle', basePrice: 155, mrpFactor: 1.2 },
+      { brand: 'Lizol', title: 'Lizol All-in-One Disinfectant Surface Cleaner Citrus 2L', basePrice: 349, mrpFactor: 1.3 },
+      { brand: 'Lifebuoy', title: 'Lifebuoy Total Germ Protection Bathing Soap Bar 4x125g Pack', basePrice: 199, mrpFactor: 1.25 },
+      { brand: 'Savlon', title: 'Savlon Moisture Shield Antiseptic Liquid 1000ml', basePrice: 289, mrpFactor: 1.3 },
+      { brand: 'Colin', title: 'Colin Glass and Multi-Surface Cleaner Spray 500ml', basePrice: 110, mrpFactor: 1.2 },
+      { brand: 'Godrej', title: 'Godrej aer Pocket Bathroom Fragrance Pack of 3', basePrice: 165, mrpFactor: 1.25 },
+      { brand: 'Harpic', title: 'Harpic Power Plus Disinfectant Toilet Cleaner 1L', basePrice: 195, mrpFactor: 1.2 },
+      { brand: 'Origami', title: 'Origami Multipurpose Kitchen Paper Towels 4 Rolls', basePrice: 260, mrpFactor: 1.3 }
+    ]
   };
 
   let targetCategories = [];
@@ -401,36 +450,151 @@ function generateLiveCatalog(categoryFilter = 'All', searchQuery = '', limit = 8
   const generated = [];
   let itemCounter = 0;
 
-  // Generate 80-100 realistic deals across category permutations
+  // Generate authentic, brand-accurate deals
   targetCategories.forEach(categoryName => {
-    const preset = categoryPresets[categoryName];
-    preset.brands.forEach((brand, bIdx) => {
-      preset.items.forEach((itemTitle, iIdx) => {
-        // Filter by search query tokens if search is active
-        const fullTitle = `${brand} ${itemTitle}`;
-        if (qLower) {
-          const tokens = qLower.split(/\s+/).filter(Boolean);
-          const corpus = `${fullTitle} ${brand} ${categoryName}`.toLowerCase();
-          const matches = tokens.some(tok => corpus.includes(tok));
-          if (!matches) return;
-        }
+    const presetList = categoryPresets[categoryName] || [];
+    presetList.forEach((item, idx) => {
+      const fullTitle = item.title;
+      const brand = item.brand;
+      if (qLower) {
+        const tokens = qLower.split(/\s+/).filter(Boolean);
+        const corpus = `${fullTitle} ${brand} ${categoryName}`.toLowerCase();
+        const matches = tokens.some(tok => corpus.includes(tok));
+        if (!matches) return;
+      }
 
-        itemCounter++;
-        const priceVariance = 0.85 + ((bIdx + iIdx) % 7) * 0.05;
-        const basePrice = Math.round(preset.basePrice * priceVariance);
-        const mrp = Math.round(basePrice * preset.mrpFactor);
-        const rating = +(4.2 + ((bIdx * 3 + iIdx) % 8) * 0.1).toFixed(1);
-        const reviews = 1200 + (bIdx * 450) + (iIdx * 380);
+      itemCounter++;
+      const basePrice = item.basePrice;
+      const mrp = Math.round(basePrice * item.mrpFactor);
+      const rating = +(4.3 + (idx % 5) * 0.1).toFixed(1);
+      const reviews = 1100 + (idx * 380);
 
-        const imgInfo = resolveBrandImages(brand, fullTitle, categoryName);
+      const imgInfo = resolveBrandImages(brand, fullTitle, categoryName);
+      const merchants = buildMerchantOffers(fullTitle, basePrice, publisherId);
+      const lowestPrice = merchants[0].price;
+
+      generated.push({
+        id: `deal-${itemCounter}-${brand.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        title: fullTitle,
+        brand: brand,
+        category: categoryName,
+        image: imgInfo.image,
+        imageUrl: imgInfo.image,
+        secondaryImage: imgInfo.secondaryImage,
+        secondaryImageUrl: imgInfo.secondaryImage,
+        brandLogo: imgInfo.brandLogo,
+        brandLogoUrl: imgInfo.brandLogo,
+        mrp: mrp,
+        lowestPrice: lowestPrice,
+        currentLowestPrice: lowestPrice,
+        rating: rating,
+        reviews: reviews,
+        merchants: merchants,
+        merchantPrices: merchants
+      });
+    });
+  });
+
+  // If specific query was searched and yielded fewer than 50 results, expand dynamically with AUTHENTIC query-aligned products
+  if (qLower && generated.length < 50) {
+    const rawTokens = qLower.split(/\s+/).filter(Boolean);
+    const queryTitle = rawTokens.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+    // 1. Detect Brand & Authentic Models from Query
+    let detectedBrand = '';
+    let detectedCategory = cat !== 'All' ? cat : 'Electronics';
+    let brandModels = [];
+
+    if (qLower.includes('asus')) {
+      detectedBrand = 'ASUS';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'Vivobook 15 Intel Core i5 12th Gen (16GB RAM / 512GB SSD / FHD)', price: 42990 },
+        { name: 'TUF Gaming F15 Intel Core i5 11th Gen (16GB RAM / 512GB SSD / RTX 3050)', price: 51990 },
+        { name: 'ROG Strix G16 16-inch 165Hz Gaming Laptop (Core i7 / RTX 4060)', price: 114990 },
+        { name: 'Zenbook 14 OLED Ultraportable Laptop (Intel Core Ultra 7 / 16GB)', price: 89990 },
+        { name: 'Vivobook Go 15 (AMD Ryzen 5 7520U / 8GB RAM / 512GB SSD)', price: 34990 },
+        { name: 'ROG Ally 7-inch 120Hz FHD Windows Gaming Handheld (AMD Z1 Extreme)', price: 59990 },
+        { name: 'Dual GeForce RTX 4060 OC Edition 8GB GDDR6 Graphics Card', price: 28490 },
+        { name: 'ProArt Display PA278CV 27-inch 2K WQHD Color-Accurate Monitor', price: 26990 },
+        { name: 'RT-AX53U Dual Band Gigabit WiFi 6 Router (1800 Mbps)', price: 3499 },
+        { name: 'ExpertBook B1 Business Laptop Core i5 12th Gen (16GB / 512GB)', price: 39990 },
+        { name: 'ROG Phone 8 Pro 5G Snapdragon 8 Gen 3 (16GB RAM / 512GB)', price: 94990 },
+        { name: 'Chromebook CX1 14-inch Full HD Display (Intel Celeron / 64GB)', price: 17990 },
+        { name: 'TUF Gaming VG27AQ 27-inch 2K QHD 165Hz IPS Gaming Monitor', price: 24990 },
+        { name: 'ROG Cetra SpeedNova True Wireless ANC Gaming Earbuds', price: 7999 },
+        { name: 'Marshmallow MD100 Silent Optical Wireless Mouse', price: 1299 },
+        { name: 'ROG Zephyrus G14 QHD+ 165Hz Slim Gaming Laptop (RTX 4070)', price: 149990 }
+      ];
+    } else if (qLower.includes('dell')) {
+      detectedBrand = 'Dell';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'Inspiron 15 3520 Intel Core i5 12th Gen (16GB / 512GB SSD)', price: 44990 },
+        { name: 'G15-5530 Gaming Laptop (Intel Core i5 13th Gen / RTX 3050)', price: 67990 },
+        { name: 'XPS 13 9315 Intel Core i7 12th Gen Ultra-Thin Laptop', price: 109990 },
+        { name: 'Latitude 3440 Business Laptop Core i5 (16GB / 512GB)', price: 52990 },
+        { name: 'S2721HN 27-inch Full HD IPS Monitor (75Hz / Dual HDMI)', price: 11990 }
+      ];
+    } else if (qLower.includes('hp')) {
+      detectedBrand = 'HP';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'Victus Gaming Laptop 15.6-inch (AMD Ryzen 5 / RTX 2050)', price: 48990 },
+        { name: 'Pavilion 14 Intel Core i5 13th Gen (16GB / 512GB SSD)', price: 58990 },
+        { name: '15s Intel Core i3 12th Gen Thin & Light Laptop', price: 33990 },
+        { name: 'Omen 16 Gaming Laptop (Intel Core i7 / RTX 4060)', price: 119990 },
+        { name: 'Envy x360 2-in-1 Touchscreen Laptop (Ryzen 7)', price: 79990 }
+      ];
+    } else if (qLower.includes('lenovo')) {
+      detectedBrand = 'Lenovo';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'IdeaPad Slim 3 Intel Core i5 12th Gen (16GB / 512GB SSD)', price: 43990 },
+        { name: 'LOQ 15 Gaming Laptop (Intel Core i5 12th Gen / RTX 3050)', price: 54990 },
+        { name: 'Legion 5 Pro 16-inch WQXGA 165Hz (Core i7 / RTX 4060)', price: 124990 },
+        { name: 'ThinkPad E14 Gen 5 AMD Ryzen 5 Business Laptop', price: 49990 },
+        { name: 'Yoga Slim 6 Intel Core i5 OLED Display (16GB / 512GB)', price: 64990 }
+      ];
+    } else if (qLower.includes('apple') || qLower.includes('iphone') || qLower.includes('macbook')) {
+      detectedBrand = 'Apple';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'iPhone 16 (128GB Ultramarine Blue)', price: 79900 },
+        { name: 'MacBook Air M3 Chip 13.6-inch (8GB Unified / 256GB SSD)', price: 104900 },
+        { name: 'iPhone 15 (128GB Black)', price: 58999 },
+        { name: 'iPad Air 11-inch M2 Chip (128GB Wi-Fi)', price: 59900 },
+        { name: 'AirPods Pro (2nd Generation with USB-C MagSafe)', price: 21990 },
+        { name: 'Apple Watch Series 10 (GPS 46mm Jet Black)', price: 46900 }
+      ];
+    } else if (qLower.includes('samsung') || qLower.includes('galaxy')) {
+      detectedBrand = 'Samsung';
+      detectedCategory = 'Electronics';
+      brandModels = [
+        { name: 'Galaxy S24 Ultra 5G (12GB RAM, 256GB Titanium Gray)', price: 119999 },
+        { name: 'Galaxy S24 5G (8GB RAM, 128GB Cobalt Violet)', price: 64999 },
+        { name: 'Galaxy A55 5G (8GB RAM, 128GB Awesome Iceblue)', price: 34999 },
+        { name: 'Galaxy Watch 6 Bluetooth (40mm Graphite)', price: 18999 },
+        { name: 'Galaxy Buds2 Pro ANC TWS Earbuds', price: 9999 },
+        { name: '55-inch Crystal 4K Vivid Pro Ultra HD Smart LED TV', price: 41990 }
+      ];
+    }
+
+    if (brandModels.length > 0) {
+      brandModels.forEach((bm, idx) => {
+        const fullTitle = `${detectedBrand} ${bm.name}`;
+        const basePrice = bm.price;
+        const mrp = Math.round(basePrice * 1.35);
+        const rating = +(4.3 + (idx % 6) * 0.1).toFixed(1);
+        const reviews = 950 + idx * 240;
+        const imgInfo = resolveBrandImages(detectedBrand, fullTitle, detectedCategory);
         const merchants = buildMerchantOffers(fullTitle, basePrice, publisherId);
-        const lowestPrice = merchants[0].price;
 
         generated.push({
-          id: `deal-${itemCounter}-${brand.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          id: `query-match-${idx}-${detectedBrand.toLowerCase()}`,
           title: fullTitle,
-          brand: brand,
-          category: categoryName,
+          brand: detectedBrand,
+          category: detectedCategory,
           image: imgInfo.image,
           imageUrl: imgInfo.image,
           secondaryImage: imgInfo.secondaryImage,
@@ -438,51 +602,58 @@ function generateLiveCatalog(categoryFilter = 'All', searchQuery = '', limit = 8
           brandLogo: imgInfo.brandLogo,
           brandLogoUrl: imgInfo.brandLogo,
           mrp: mrp,
-          lowestPrice: lowestPrice,
-          currentLowestPrice: lowestPrice,
+          lowestPrice: merchants[0].price,
+          currentLowestPrice: merchants[0].price,
           rating: rating,
           reviews: reviews,
           merchants: merchants,
           merchantPrices: merchants
         });
       });
-    });
-  });
+    } else {
+      // Clean query fallback: never prepend random brands like 'Puma'
+      const queryBrand = rawTokens[0].charAt(0).toUpperCase() + rawTokens[0].slice(1);
+      const querySpecifiers = [
+        'Pro Edition Ultra',
+        'Standard Series',
+        'Max Performance 2026',
+        'Plus Model V2',
+        'Classic Edition',
+        'Prime Edition',
+        'Signature Series',
+        'Elite Special',
+        'Compact Series',
+        'Ultra Compact Drop'
+      ];
 
-  // If specific query was searched and yielded fewer than 50 results, expand dynamically
-  if (qLower && generated.length < 50) {
-    const queryTitle = qLower.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    const brands = ['Puma', 'Nike', 'Adidas', 'Apple', 'Samsung', 'boAt', 'Sony', 'Prestige', 'Dettol', 'Daawat'];
-    const modifiers = ['Pro Edition', 'Max Performance', 'Ultra Series', 'Prime Classic', 'Elite Special', 'V2 Drop', 'Plus 2026'];
+      for (let i = 0; i < 20; i++) {
+        const spec = querySpecifiers[i % querySpecifiers.length];
+        const dynTitle = `${queryTitle} ${spec} #${i + 1}`;
+        const dynPrice = Math.round(899 + (i * 120) % 3500);
+        const dynMrp = Math.round(dynPrice * 1.4);
+        const imgInfo = resolveBrandImages(queryBrand, dynTitle, cat !== 'All' ? cat : 'Electronics');
+        const merchants = buildMerchantOffers(dynTitle, dynPrice, publisherId);
 
-    for (let i = generated.length; i < 60; i++) {
-      const b = brands[i % brands.length];
-      const m = modifiers[i % modifiers.length];
-      const dynTitle = `${b} ${queryTitle} ${m} #${i + 1}`;
-      const dynPrice = Math.round(699 + (i * 85) % 4500);
-      const dynMrp = Math.round(dynPrice * 1.45);
-      const imgInfo = resolveBrandImages(b, dynTitle, cat !== 'All' ? cat : 'Electronics');
-      const merchants = buildMerchantOffers(dynTitle, dynPrice, publisherId);
-
-      generated.push({
-        id: `dyn-search-${i}-${b.toLowerCase()}`,
-        title: dynTitle,
-        brand: b,
-        category: cat !== 'All' ? cat : 'All',
-        image: imgInfo.image,
-        imageUrl: imgInfo.image,
-        secondaryImage: imgInfo.secondaryImage,
-        secondaryImageUrl: imgInfo.secondaryImage,
-        brandLogo: imgInfo.brandLogo,
-        brandLogoUrl: imgInfo.brandLogo,
-        mrp: dynMrp,
-        lowestPrice: merchants[0].price,
-        currentLowestPrice: merchants[0].price,
-        rating: +(4.2 + (i % 6) * 0.1).toFixed(1),
-        reviews: 800 + i * 120,
-        merchants: merchants,
-        merchantPrices: merchants
-      });
+        generated.push({
+          id: `dyn-search-${i}-${queryBrand.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          title: dynTitle,
+          brand: queryBrand,
+          category: cat !== 'All' ? cat : 'Electronics',
+          image: imgInfo.image,
+          imageUrl: imgInfo.image,
+          secondaryImage: imgInfo.secondaryImage,
+          secondaryImageUrl: imgInfo.secondaryImage,
+          brandLogo: imgInfo.brandLogo,
+          brandLogoUrl: imgInfo.brandLogo,
+          mrp: dynMrp,
+          lowestPrice: merchants[0].price,
+          currentLowestPrice: merchants[0].price,
+          rating: +(4.2 + (i % 6) * 0.1).toFixed(1),
+          reviews: 600 + i * 90,
+          merchants: merchants,
+          merchantPrices: merchants
+        });
+      }
     }
   }
 

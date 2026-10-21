@@ -622,6 +622,17 @@ object RealTimeProductSearchEngine {
                     sellerRating = 4.4,
                     deliverySpeed = "1-2 Days",
                     returnPolicy = "7 Days Return"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-sd",
+                    merchantName = "Snapdeal",
+                    originalUrl = "https://www.snapdeal.com/search?keyword=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (0.94 + ((idx % 3) * 0.02))).toDouble(),
+                    discountPct = (claimedDiscount + 3).coerceAtMost(70),
+                    inStock = true,
+                    sellerRating = 4.3,
+                    deliverySpeed = "3-4 Days",
+                    returnPolicy = "7 Days Return"
                 )
             ).sortedBy { it.currentPrice } // Sort merchant offers for this product by lowest price
 
