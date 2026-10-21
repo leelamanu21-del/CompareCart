@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.local.UserSessionManager
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CompareCartViewModel
 
@@ -30,15 +31,18 @@ import com.example.ui.viewmodel.CompareCartViewModel
 @Composable
 fun AccountScreen(
     viewModel: CompareCartViewModel,
+    sessionManager: UserSessionManager,
     onManageCardsClick: () -> Unit,
     onAlertsClick: () -> Unit,
     onAffiliateInfoClick: () -> Unit,
+    onLoginClick: () -> Unit,
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
 
     val userCards by viewModel.userCards.collectAsState()
     val priceAlerts by viewModel.priceAlerts.collectAsState()
+    val userSession by sessionManager.session.collectAsState()
 
     Scaffold(
         containerColor = BackgroundWhite,
@@ -46,7 +50,7 @@ fun AccountScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Your Account",
+                        "Your Account & Profile",
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
                         fontSize = 18.sp
@@ -64,48 +68,94 @@ fun AccountScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // User Profile Header (Amazon style)
+            // User Profile Header with Live Auth State
             Card(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceLightGrey),
                 border = CardDefaults.outlinedCardBorder().copy(
                     brush = androidx.compose.ui.graphics.SolidColor(BorderLight)
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .background(AmazonTeal),
-                        contentAlignment = Alignment.Center
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "CC",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(54.dp)
+                                .clip(CircleShape)
+                                .background(if (userSession.isLoggedIn) AmazonTeal else Color(0xFF64748B)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = userSession.avatarInitials,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = userSession.userName,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextDark,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (userSession.userContact.isNotBlank()) userSession.userContact else "Guest Mode (Local Device)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedGrey
+                            )
+                        }
+
+                        if (userSession.isLoggedIn) {
+                            OutlinedButton(
+                                onClick = { sessionManager.logout(); onLoginClick() },
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                modifier = Modifier.testTag("logout_button")
+                            ) {
+                                Text("Log Out", fontSize = 11.sp, color = AmazonRed, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Button(
+                                onClick = onLoginClick,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AmazonNavy),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.testTag("signin_header_button")
+                            ) {
+                                Text("Sign In", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column {
-                        Text(
-                            text = "Hello, CompareCart Shopper",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextDark,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Smart E-Commerce Price Intelligence",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMutedGrey
-                        )
+                    if (userSession.isGuest) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFEF3C7),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Browsing as Guest. Sign in with Phone/Google to sync price alerts.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF92400E),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -166,6 +216,115 @@ fun AccountScreen(
                 }
             }
 
+            // PRIMARY SHIFT: Card Management & Saved Payment Methods in Profile
+            Text(
+                text = "Saved Bank Cards & Payment Methods",
+                style = MaterialTheme.typography.titleSmall,
+                color = TextDark,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                border = CardDefaults.outlinedCardBorder().copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(BorderLight)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Instant Card Discount Math",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextDark
+                            )
+                            Text(
+                                text = "Toggle active cards to compute net out-of-pocket prices",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedGrey,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        TextButton(
+                            onClick = onManageCardsClick,
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Text("Manage All", color = AmazonTeal, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Inline list of user cards with instant toggling
+                    userCards.forEach { card ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (card.isEnabled) AmazonNavyLight else SurfaceLightGrey),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CreditCard,
+                                        contentDescription = null,
+                                        tint = if (card.isEnabled) AmazonOrange else TextLightGrey,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "${card.bankName} ${card.cardType}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TextDark,
+                                        fontSize = 13.sp
+                                    )
+                                    Text(
+                                        text = "${card.cardNetwork} • Instant Discount Active",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (card.isEnabled) AsliGreen else TextLightGrey,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            Switch(
+                                checked = card.isEnabled,
+                                onCheckedChange = { active -> viewModel.toggleCard(card.id, active) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = AmazonTeal,
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = BorderLight
+                                ),
+                                modifier = Modifier.testTag("toggle_card_${card.id}")
+                            )
+                        }
+                        if (card != userCards.lastOrNull()) {
+                            HorizontalDivider(color = BorderLight.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 2.dp))
+                        }
+                    }
+                }
+            }
+
             Text(
                 text = "Account Settings & Features",
                 style = MaterialTheme.typography.titleSmall,
@@ -177,8 +336,8 @@ fun AccountScreen(
             // Settings List Items
             AccountOptionRow(
                 icon = Icons.Default.CreditCard,
-                title = "My Bank Cards & Instant Discounts",
-                subtitle = "Manage HDFC, SBI, ICICI & Axis cards for live out-of-pocket savings",
+                title = "Card Portfolio Settings",
+                subtitle = "Add new cards, set credit limits, customize bank reward rates",
                 onClick = onManageCardsClick
             )
 
@@ -216,7 +375,7 @@ fun AccountScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "CompareCart Android v2.0 • Amazon Style",
+                        text = "CompareCart Android v2.0 • Buyhatke Style",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextMutedGrey,
                         fontWeight = FontWeight.SemiBold

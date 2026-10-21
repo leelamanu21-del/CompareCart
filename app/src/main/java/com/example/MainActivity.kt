@@ -34,6 +34,7 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.CompareCartViewModel
 
 enum class Screen {
+    WELCOME,
     HOME,
     EXPLORE,
     DEALS,
@@ -48,10 +49,13 @@ enum class Screen {
 class MainActivity : ComponentActivity() {
 
     private val viewModel: CompareCartViewModel by viewModels()
+    private lateinit var sessionManager: com.example.data.local.UserSessionManager
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        sessionManager = com.example.data.local.UserSessionManager.getInstance(this)
 
         setContent {
             CompareCartTheme {
@@ -69,7 +73,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                var currentScreen by remember { mutableStateOf(Screen.HOME) }
+                var currentScreen by remember {
+                    mutableStateOf(if (sessionManager.hasCompletedWelcome()) Screen.HOME else Screen.WELCOME)
+                }
                 val selectedProduct by viewModel.selectedProduct.collectAsState()
 
                 Scaffold(
@@ -174,6 +180,13 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         when (currentScreen) {
+                            Screen.WELCOME -> {
+                                WelcomeScreen(
+                                    sessionManager = sessionManager,
+                                    onContinueToHome = { currentScreen = Screen.HOME }
+                                )
+                            }
+
                             Screen.HOME -> {
                                 HomeScreen(
                                     viewModel = viewModel,
@@ -217,9 +230,11 @@ class MainActivity : ComponentActivity() {
                             Screen.ACCOUNT -> {
                                 AccountScreen(
                                     viewModel = viewModel,
+                                    sessionManager = sessionManager,
                                     onManageCardsClick = { currentScreen = Screen.MY_CARDS },
                                     onAlertsClick = { currentScreen = Screen.SAVED_ALERTS },
                                     onAffiliateInfoClick = { currentScreen = Screen.AFFILIATE_INFO },
+                                    onLoginClick = { currentScreen = Screen.WELCOME },
                                     onBack = { currentScreen = Screen.HOME }
                                 )
                             }

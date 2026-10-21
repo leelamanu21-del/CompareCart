@@ -107,7 +107,11 @@ fun MerchantPriceMatrix(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            MerchantLogoBadge(merchant = merchant.merchantName, size = 24.dp)
                             Text(
                                 text = merchant.merchantName,
                                 style = MaterialTheme.typography.titleMedium,

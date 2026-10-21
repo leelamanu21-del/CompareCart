@@ -10,15 +10,15 @@ import retrofit2.http.POST
 
 @JsonClass(generateAdapter = true)
 data class CuelinksConvertRequest(
-    @Json(name = "url") val url: String
+    @param:Json(name = "url") val url: String
 )
 
 @JsonClass(generateAdapter = true)
 data class CuelinksConvertResponse(
-    @Json(name = "affiliate_url") val affiliateUrl: String? = null,
-    @Json(name = "url") val fallbackUrl: String? = null,
-    @Json(name = "status") val status: String? = null,
-    @Json(name = "message") val message: String? = null
+    @param:Json(name = "affiliate_url") val affiliateUrl: String? = null,
+    @param:Json(name = "url") val fallbackUrl: String? = null,
+    @param:Json(name = "status") val status: String? = null,
+    @param:Json(name = "message") val message: String? = null
 )
 
 interface CuelinksApi {

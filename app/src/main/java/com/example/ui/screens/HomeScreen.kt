@@ -31,7 +31,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.data.model.*
 import com.example.ui.components.AiVoiceSearchSheet
-import com.example.ui.components.MyCardsFilterBar
+import com.example.ui.components.MerchantLogoBadge
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CompareCartViewModel
 import java.text.NumberFormat
@@ -344,12 +344,46 @@ fun HomeScreen(
                     }
                 }
 
-                // Bank Cards Instant Savings Bar
-                MyCardsFilterBar(
-                    userCards = userCards,
-                    onToggleCard = { id, active -> viewModel.toggleCard(id, active) },
-                    onManageCardsClicked = onManageCardsClick
-                )
+                // Multi-Store Live Intelligence Bar (Clean, clutter-free store ticker)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = SurfaceLightGrey,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Live Stores:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMutedGrey,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            listOf("Amazon", "Flipkart", "Myntra", "JioMart", "Tata CLiQ", "Croma").forEach { store ->
+                                MerchantLogoBadge(merchant = store, size = 16.dp)
+                            }
+                        }
+
+                        Text(
+                            text = "⚡ Live Sync",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AmazonTeal,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
 
                 // Category Navigation Row
                 LazyRow(
@@ -773,21 +807,27 @@ fun AmazonStyleProductCard(
                     ) {
                         product.merchantPrices.take(3).forEach { m ->
                             val isLowest = (m.id == bestMerchant.id)
-                            Column {
-                                Text(
-                                    text = m.merchantName,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isLowest) AmazonTeal else TextMutedGrey,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isLowest) FontWeight.Bold else FontWeight.Normal
-                                )
-                                Text(
-                                    text = currencyFormat.format(m.currentPrice),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isLowest) AsliGreen else TextDark,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                MerchantLogoBadge(merchant = m.merchantName, size = 16.dp)
+                                Column {
+                                    Text(
+                                        text = m.merchantName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isLowest) AmazonTeal else TextMutedGrey,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isLowest) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                    Text(
+                                        text = currencyFormat.format(m.currentPrice),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isLowest) AsliGreen else TextDark,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    )
+                                }
                             }
                         }
                     }
