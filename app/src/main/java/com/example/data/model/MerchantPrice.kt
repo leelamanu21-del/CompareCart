@@ -38,7 +38,9 @@ data class MerchantPrice(
     val sellerRating: Double,
     val deliverySpeed: String, // "Tomorrow by 11 AM", "2 Days", "Same-Day Delivery"
     val returnPolicy: String,  // "7-Day Replacement", "10-Day Return"
-    val offers: List<CardOffer> = emptyList()
+    val offers: List<CardOffer> = emptyList(),
+    val qualityBadge: String? = null,
+    val isRecommended: Boolean = false
 ) {
     /**
      * Calculates effective net out-of-pocket price based on user's active bank cards

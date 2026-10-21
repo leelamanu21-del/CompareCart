@@ -505,8 +505,8 @@ object RealTimeProductSearchEngine {
 
             val encodedTitle = URLEncoder.encode(itemTitle, StandardCharsets.UTF_8.toString())
 
-            // All 10 Top Indian E-Commerce Stores
-            val merchants = listOf(
+            // All Top Indian E-Commerce Stores (Amazon P1, Flipkart & Myntra P2, etc.)
+            val allCandidates = listOf(
                 MerchantPrice(
                     id = "mp-$cleanQ-$idx-amz",
                     merchantName = "Amazon",
@@ -517,6 +517,7 @@ object RealTimeProductSearchEngine {
                     sellerRating = 4.7,
                     deliverySpeed = "Tomorrow by 11 AM",
                     returnPolicy = "7 Days Replacement",
+                    qualityBadge = "Trusted • Fast Delivery",
                     offers = listOf(
                         CardOffer("co-$idx-1", "HDFC", "Credit Card", DiscountType.PERCENTAGE, 10.0, 500.0, 1000.0, "HDFC10", "10% Instant Discount on HDFC Cards")
                     )
@@ -531,42 +532,10 @@ object RealTimeProductSearchEngine {
                     sellerRating = 4.6,
                     deliverySpeed = "2 Days",
                     returnPolicy = "7 Days Return",
+                    qualityBadge = "Best Value • Assured",
                     offers = listOf(
                         CardOffer("co-$idx-2", "SBI", "Credit Card", DiscountType.FLAT, 250.0, 250.0, 1500.0, "SBI250", "Flat ₹250 off on SBI Cards")
                     )
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-croma",
-                    merchantName = "Croma",
-                    originalUrl = "https://www.croma.com/searchB?q=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (1.01 + ((idx % 4) * 0.015))).toDouble(),
-                    discountPct = (claimedDiscount - 3).coerceAtLeast(5),
-                    inStock = true,
-                    sellerRating = 4.5,
-                    deliverySpeed = "Standard (2-3 Days)",
-                    returnPolicy = "7 Days Replacement"
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-rd",
-                    merchantName = "Reliance Digital",
-                    originalUrl = "https://www.reliancedigital.in/search?q=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (1.02 + ((idx % 5) * 0.01))).toDouble(),
-                    discountPct = (claimedDiscount - 4).coerceAtLeast(5),
-                    inStock = true,
-                    sellerRating = 4.5,
-                    deliverySpeed = "2 Days",
-                    returnPolicy = "7 Days Return"
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-cliq",
-                    merchantName = "Tata CLiQ",
-                    originalUrl = "https://www.tatacliq.com/search/?searchCategory=all&text=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (1.015 + ((idx % 3) * 0.018))).toDouble(),
-                    discountPct = (claimedDiscount - 3).coerceAtLeast(5),
-                    inStock = true,
-                    sellerRating = 4.6,
-                    deliverySpeed = "3 Days",
-                    returnPolicy = "14 Days Return"
                 ),
                 MerchantPrice(
                     id = "mp-$cleanQ-$idx-myntra",
@@ -577,40 +546,8 @@ object RealTimeProductSearchEngine {
                     inStock = true,
                     sellerRating = 4.6,
                     deliverySpeed = "Tomorrow",
-                    returnPolicy = "14 Days Return"
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-ajio",
-                    merchantName = "Ajio",
-                    originalUrl = "https://www.ajio.com/search/?text=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (1.03 + ((idx % 3) * 0.01))).toDouble(),
-                    discountPct = (claimedDiscount - 5).coerceAtLeast(5),
-                    inStock = true,
-                    sellerRating = 4.5,
-                    deliverySpeed = "2-3 Days",
-                    returnPolicy = "15 Days Return"
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-meesho",
-                    merchantName = "Meesho",
-                    originalUrl = "https://www.meesho.com/search?q=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (0.92 + ((idx % 4) * 0.02))).toDouble(), // often lowest budget price
-                    discountPct = (claimedDiscount + 5).coerceAtMost(75),
-                    inStock = true,
-                    sellerRating = 4.3,
-                    deliverySpeed = "3-5 Days",
-                    returnPolicy = "7 Days Return"
-                ),
-                MerchantPrice(
-                    id = "mp-$cleanQ-$idx-nykaa",
-                    merchantName = "Nykaa",
-                    originalUrl = "https://www.nykaa.com/search/result/?q=$encodedTitle",
-                    currentPrice = Math.round(currentPrice * (1.04 + ((idx % 3) * 0.015))).toDouble(),
-                    discountPct = (claimedDiscount - 6).coerceAtLeast(5),
-                    inStock = true,
-                    sellerRating = 4.6,
-                    deliverySpeed = "2 Days",
-                    returnPolicy = "15 Days Return"
+                    returnPolicy = "14 Days Return",
+                    qualityBadge = "100% Original Style"
                 ),
                 MerchantPrice(
                     id = "mp-$cleanQ-$idx-jiomart",
@@ -621,7 +558,68 @@ object RealTimeProductSearchEngine {
                     inStock = true,
                     sellerRating = 4.4,
                     deliverySpeed = "1-2 Days",
-                    returnPolicy = "7 Days Return"
+                    returnPolicy = "7 Days Return",
+                    qualityBadge = "Verified Indian Store"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-croma",
+                    merchantName = "Croma",
+                    originalUrl = "https://www.croma.com/searchB?q=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (1.01 + ((idx % 4) * 0.015))).toDouble(),
+                    discountPct = (claimedDiscount - 3).coerceAtLeast(5),
+                    inStock = true,
+                    sellerRating = 4.5,
+                    deliverySpeed = "Standard (2-3 Days)",
+                    returnPolicy = "7 Days Replacement",
+                    qualityBadge = "Tata Tech Warranty"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-cliq",
+                    merchantName = "Tata CLiQ",
+                    originalUrl = "https://www.tatacliq.com/search/?searchCategory=all&text=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (1.015 + ((idx % 3) * 0.018))).toDouble(),
+                    discountPct = (claimedDiscount - 3).coerceAtLeast(5),
+                    inStock = true,
+                    sellerRating = 4.6,
+                    deliverySpeed = "3 Days",
+                    returnPolicy = "14 Days Return",
+                    qualityBadge = "Tata Brand Warranty"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-rd",
+                    merchantName = "Reliance Digital",
+                    originalUrl = "https://www.reliancedigital.in/search?q=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (1.02 + ((idx % 5) * 0.01))).toDouble(),
+                    discountPct = (claimedDiscount - 4).coerceAtLeast(5),
+                    inStock = true,
+                    sellerRating = 4.5,
+                    deliverySpeed = "2 Days",
+                    returnPolicy = "7 Days Return",
+                    qualityBadge = "Official Reliance Store"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-ajio",
+                    merchantName = "Ajio",
+                    originalUrl = "https://www.ajio.com/search/?text=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (1.03 + ((idx % 3) * 0.01))).toDouble(),
+                    discountPct = (claimedDiscount - 5).coerceAtLeast(5),
+                    inStock = true,
+                    sellerRating = 4.5,
+                    deliverySpeed = "2-3 Days",
+                    returnPolicy = "15 Days Return",
+                    qualityBadge = "Official Store"
+                ),
+                MerchantPrice(
+                    id = "mp-$cleanQ-$idx-meesho",
+                    merchantName = "Meesho",
+                    originalUrl = "https://www.meesho.com/search?q=$encodedTitle",
+                    currentPrice = Math.round(currentPrice * (0.82 + ((idx % 4) * 0.02))).toDouble(),
+                    discountPct = (claimedDiscount + 8).coerceAtMost(75),
+                    inStock = true,
+                    sellerRating = 4.3,
+                    deliverySpeed = "3-5 Days",
+                    returnPolicy = "7 Days Return",
+                    qualityBadge = "Wholesale Price"
                 ),
                 MerchantPrice(
                     id = "mp-$cleanQ-$idx-sd",
@@ -632,11 +630,52 @@ object RealTimeProductSearchEngine {
                     inStock = true,
                     sellerRating = 4.3,
                     deliverySpeed = "3-4 Days",
-                    returnPolicy = "7 Days Return"
+                    returnPolicy = "7 Days Return",
+                    qualityBadge = "Budget Choice"
                 )
-            ).sortedBy { it.currentPrice } // Sort merchant offers for this product by lowest price
+            )
 
-            val lowestPrice = merchants.first().currentPrice
+            // Meesho filter: only include if >15% cheaper than Amazon / Flipkart
+            val amazonPrice = allCandidates.find { it.merchantName == "Amazon" }?.currentPrice ?: Double.MAX_VALUE
+            val flipkartPrice = allCandidates.find { it.merchantName == "Flipkart" }?.currentPrice ?: Double.MAX_VALUE
+            val majorMin = minOf(amazonPrice, flipkartPrice)
+
+            val filteredCandidates = allCandidates.filter { m ->
+                if (m.merchantName == "Meesho") {
+                    if (majorMin == Double.MAX_VALUE) true else m.currentPrice < (majorMin * 0.85)
+                } else true
+            }
+
+            // Priority sorting: Amazon (1), Flipkart/Myntra (2), others (3), Snapdeal (4), Meesho (5)
+            val sortedOffers = filteredCandidates.sortedWith(
+                compareBy<MerchantPrice> { m ->
+                    when (m.merchantName) {
+                        "Amazon" -> 1
+                        "Flipkart", "Myntra" -> 2
+                        "Snapdeal" -> 4
+                        "Meesho" -> 5
+                        else -> 3
+                    }
+                }.thenBy { it.currentPrice }
+            )
+
+            // Limit to Top 4 to 5 stores
+            val topStores = sortedOffers.take(5)
+            val minPrice = topStores.minOf { it.currentPrice }
+            val amzInTop = topStores.find { it.merchantName == "Amazon" }
+            val fkInTop = topStores.find { it.merchantName == "Flipkart" }
+
+            val recommendedName = when {
+                amzInTop != null && amzInTop.currentPrice <= minPrice * 1.03 -> "Amazon"
+                fkInTop != null && fkInTop.currentPrice <= minPrice * 1.03 -> "Flipkart"
+                else -> topStores.minByOrNull { it.currentPrice }?.merchantName ?: "Amazon"
+            }
+
+            val merchants = topStores.map { m ->
+                if (m.merchantName == recommendedName) m.copy(isRecommended = true) else m
+            }
+
+            val lowestPrice = merchants.minOf { it.currentPrice }
             val (resolvedImg, resolvedSecImg, resolvedLogo) = BrandImageResolver.resolve(brand, itemTitle, detectedCat)
 
             results.add(
@@ -700,23 +739,34 @@ object RealTimeProductSearchEngine {
     }
 
     /**
-     * Automatically wraps every single merchant price URL with the configured
-     * Cuelinks affiliate monetization link converter (clnk.in / linksredirect.com).
+     * Sanitizes merchant product URLs to ensure canonical, clean merchant URLs
+     * without Google/SerpApi tracking wrappers, so links can be safely monetized via Cuelinks
+     * or opened directly via external application without errors.
      */
     private fun wrapWithCuelinksMonetization(products: List<Product>): List<Product> {
         return products.map { product ->
-            val wrappedMerchants = product.merchantPrices.map { merchant ->
-                if (merchant.originalUrl.contains("linksredirect.com")) {
-                    merchant
-                } else {
-                    val encodedTarget = URLEncoder.encode(merchant.originalUrl, StandardCharsets.UTF_8.toString())
-                    // Standard Cuelinks redirect URL with pub_id and cid
-                    val monetizedAffiliateUrl = "https://linksredirect.com/?pub_id=108920&cid=108920&source=comparecart_app&url=$encodedTarget"
-                    merchant.copy(originalUrl = monetizedAffiliateUrl)
-                }
+            val cleanedMerchants = product.merchantPrices.map { merchant ->
+                val cleanUrl = cleanTrackingWrappers(merchant.originalUrl)
+                merchant.copy(originalUrl = cleanUrl)
             }
-            product.copy(merchantPrices = wrappedMerchants)
+            product.copy(merchantPrices = cleanedMerchants)
         }
+    }
+
+    private fun cleanTrackingWrappers(rawUrl: String): String {
+        var clean = rawUrl.trim()
+        if (clean.contains("google.com/url?")) {
+            val qIdx = clean.indexOf("q=")
+            if (qIdx != -1) {
+                var extracted = clean.substring(qIdx + 2)
+                val ampIdx = extracted.indexOf('&')
+                if (ampIdx != -1) extracted = extracted.substring(0, ampIdx)
+                try {
+                    clean = java.net.URLDecoder.decode(extracted, StandardCharsets.UTF_8.toString())
+                } catch (_: Exception) {}
+            }
+        }
+        return clean
     }
 
     private fun parseJsonProduct(obj: JSONObject, idx: Int): Product? {
@@ -747,11 +797,24 @@ object RealTimeProductSearchEngine {
                     val mObj = mArr.getJSONObject(m)
                     val mName = mObj.optString("name", "").ifBlank { mObj.optString("merchantName", "Store") }
                     val mPrice = mObj.optDouble("price", 0.0).let { if (it > 0) it else mObj.optDouble("currentPrice", currentLowest) }
-                    val rawUrl = mObj.optString("url", "").ifBlank {
+                    val rawUrl = cleanTrackingWrappers(mObj.optString("url", "").ifBlank {
                         mObj.optString("pdpUrl", "").ifBlank {
                             mObj.optString("originalUrl", "https://www.amazon.in/s?k=${URLEncoder.encode(title, "UTF-8")}")
                         }
+                    })
+                    val qBadge = mObj.optString("qualityBadge", "").ifBlank {
+                        mObj.optString("recommendationBadge", "")
+                    }.ifBlank {
+                        when {
+                            mName.contains("amazon", true) -> "Trusted • Fast Delivery"
+                            mName.contains("flipkart", true) -> "Best Value • Assured"
+                            mName.contains("myntra", true) -> "100% Original Style"
+                            mName.contains("jiomart", true) -> "Verified Indian Store"
+                            mName.contains("meesho", true) -> "Wholesale Price"
+                            else -> "Verified Merchant"
+                        }
                     }
+                    val isRec = mObj.optBoolean("isRecommended", false)
 
                     merchantList.add(
                         MerchantPrice(
@@ -763,10 +826,47 @@ object RealTimeProductSearchEngine {
                             inStock = true,
                             sellerRating = 4.6,
                             deliverySpeed = "Tomorrow by 11 AM",
-                            returnPolicy = "7 Days Replacement"
+                            returnPolicy = "7 Days Replacement",
+                            qualityBadge = qBadge,
+                            isRecommended = isRec
                         )
                     )
                 }
+            }
+
+            // Prioritize merchantList (Amazon P1, Flipkart/Myntra P2, others, Meesho gated at >15% lower)
+            val amzP = merchantList.find { it.merchantName.contains("amazon", true) }?.currentPrice ?: Double.MAX_VALUE
+            val fkP = merchantList.find { it.merchantName.contains("flipkart", true) }?.currentPrice ?: Double.MAX_VALUE
+            val majMin = minOf(amzP, fkP)
+
+            val filteredMerchants = merchantList.filter { m ->
+                if (m.merchantName.contains("meesho", true)) {
+                    if (majMin == Double.MAX_VALUE) true else m.currentPrice < (majMin * 0.85)
+                } else true
+            }.sortedWith(
+                compareBy<MerchantPrice> { m ->
+                    val name = m.merchantName.lowercase()
+                    when {
+                        name.contains("amazon") -> 1
+                        name.contains("flipkart") || name.contains("myntra") -> 2
+                        name.contains("snapdeal") -> 4
+                        name.contains("meesho") -> 5
+                        else -> 3
+                    }
+                }.thenBy { it.currentPrice }
+            ).take(5)
+
+            val minPriceParsed = filteredMerchants.minOfOrNull { it.currentPrice } ?: currentLowest
+            val amzParsed = filteredMerchants.find { it.merchantName.contains("amazon", true) }
+            val fkParsed = filteredMerchants.find { it.merchantName.contains("flipkart", true) }
+            val recParsedName = when {
+                amzParsed != null && amzParsed.currentPrice <= minPriceParsed * 1.03 -> "Amazon"
+                fkParsed != null && fkParsed.currentPrice <= minPriceParsed * 1.03 -> "Flipkart"
+                else -> filteredMerchants.minByOrNull { it.currentPrice }?.merchantName ?: "Amazon"
+            }
+
+            val finalMerchants = filteredMerchants.map { m ->
+                if (m.merchantName == recParsedName) m.copy(isRecommended = true) else m
             }
 
             Product(
@@ -787,9 +887,9 @@ object RealTimeProductSearchEngine {
                     PriceHistoryPoint(30, "Sep 15", currentLowest * 1.05),
                     PriceHistoryPoint(0, "Today", currentLowest, isSaleEvent = true, saleEventName = "Live Deal")
                 ),
-                merchantPrices = merchantList.ifEmpty {
+                merchantPrices = finalMerchants.ifEmpty {
                     listOf(
-                        MerchantPrice("mp-$id-0", "Amazon", "https://www.amazon.in", currentLowest, 30, true, 4.7, "Tomorrow", "7 Days")
+                        MerchantPrice("mp-$id-0", "Amazon", "https://www.amazon.in", currentLowest, 30, true, 4.7, "Tomorrow", "7 Days", qualityBadge = "Trusted • Fast Delivery", isRecommended = true)
                     )
                 },
                 buyWaitSignal = buyWait,

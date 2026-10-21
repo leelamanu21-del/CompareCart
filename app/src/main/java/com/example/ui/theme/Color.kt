@@ -52,3 +52,9 @@ val BuyNowBadge = Color(0xFF067D62)
 val WaitBadge = Color(0xFFC45500)
 val GoldStar = Color(0xFFFFA41C)
 val ErrorRed = Color(0xFFB12704)
+
+// Color-Coded Store Recommendation Tokens
+val RecommendedGreen = Color(0xFF2ECC71)          // Vivid Green #2ECC71 for App Recommended Best Deal
+val RecommendedGreenContainer = Color(0xFFE8F8F0) // Subtle Light Green Container
+val DealYellow = Color(0xFFF1C40F)                // Attractive Yellow / Amber #F1C40F for standard store deals
+val DealYellowContainer = Color(0xFFFEF9E7)       // Subtle Warm Yellow Container

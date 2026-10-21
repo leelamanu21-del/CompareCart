@@ -321,49 +321,164 @@ async function fetchSerpApiShopping(query, page = 1) {
 }
 
 // Builds exact, verified merchant search / PDP URLs with strict URI encoding
-// Covers all Top 10 Indian Merchants: Amazon, Flipkart, Croma, Reliance Digital, Tata CLiQ, Myntra, Ajio, Meesho, Nykaa, JioMart
+// Priority 1: Amazon (Top Priority)
+// Priority 2: Flipkart & Myntra (Second Priority)
+// Priority 3: JioMart, Tata CLiQ, Croma, Reliance Digital, Snapdeal (Fallback / Lower Priority)
+// Show Meesho only if its price is significantly lower (>15% lower) or when no major platform deals exist
+// Limits to Top 4 to 5 store deal options with color-coded Buy Now indicators (Green = Recommended, Yellow = Standard)
 function buildMerchantOffers(title, basePrice, publisherId) {
   const encodedTitle = encodeURIComponent(title.trim());
   const words = title.trim().split(/\s+/).filter(Boolean);
   // Concise 2-3 word slug for Myntra to strictly prevent "Page Not Found" (404)
   const shortSlug = words.slice(0, 3).join('-').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-|-$/g, '') || 'shop';
 
-  const merchantDefs = [
-    { name: 'Amazon', priceFactor: 1.0, pdpUrl: `https://www.amazon.in/s?k=${encodedTitle}` },
-    { name: 'Flipkart', priceFactor: 1.02, pdpUrl: `https://www.flipkart.com/search?q=${encodedTitle}` },
-    { name: 'Snapdeal', priceFactor: 0.95, pdpUrl: `https://www.snapdeal.com/search?keyword=${encodedTitle}` },
-    { name: 'Tata CLiQ', priceFactor: 1.035, pdpUrl: `https://www.tatacliq.com/search/?searchCategory=all&text=${encodedTitle}` },
-    { name: 'Myntra', priceFactor: 1.015, pdpUrl: `https://www.myntra.com/${encodeURIComponent(shortSlug)}?rawQuery=${encodedTitle}` },
-    { name: 'JioMart', priceFactor: 0.96, pdpUrl: `https://www.jiomart.com/search/${encodedTitle}` },
-    { name: 'Croma', priceFactor: 1.03, pdpUrl: `https://www.croma.com/searchB?q=${encodedTitle}` },
-    { name: 'Reliance Digital', priceFactor: 1.025, pdpUrl: `https://www.reliancedigital.in/search?q=${encodedTitle}:relevance` },
-    { name: 'Ajio', priceFactor: 1.03, pdpUrl: `https://www.ajio.com/search/?text=${encodedTitle}` },
-    { name: 'Meesho', priceFactor: 0.94, pdpUrl: `https://www.meesho.com/search?q=${encodedTitle}` },
-    { name: 'Nykaa', priceFactor: 1.04, pdpUrl: `https://www.nykaa.com/search/result/?q=${encodedTitle}` }
+  const candidateDefs = [
+    {
+      name: 'Amazon',
+      priority: 1,
+      qualityBadge: 'Trusted • Fast Delivery',
+      priceFactor: 1.0,
+      pdpUrl: `https://www.amazon.in/s?k=${encodedTitle}`
+    },
+    {
+      name: 'Flipkart',
+      priority: 2,
+      qualityBadge: 'Best Value • Assured',
+      priceFactor: 1.015,
+      pdpUrl: `https://www.flipkart.com/search?q=${encodedTitle}`
+    },
+    {
+      name: 'Myntra',
+      priority: 2,
+      qualityBadge: '100% Original Style',
+      priceFactor: 1.02,
+      pdpUrl: `https://www.myntra.com/${encodeURIComponent(shortSlug)}?rawQuery=${encodedTitle}`
+    },
+    {
+      name: 'JioMart',
+      priority: 3,
+      qualityBadge: 'Verified Indian Store',
+      priceFactor: 0.97,
+      pdpUrl: `https://www.jiomart.com/search/${encodedTitle}`
+    },
+    {
+      name: 'Tata CLiQ',
+      priority: 3,
+      qualityBadge: 'Tata Brand Warranty',
+      priceFactor: 1.03,
+      pdpUrl: `https://www.tatacliq.com/search/?searchCategory=all&text=${encodedTitle}`
+    },
+    {
+      name: 'Croma',
+      priority: 3,
+      qualityBadge: 'Tata Tech Warranty',
+      priceFactor: 1.025,
+      pdpUrl: `https://www.croma.com/searchB?q=${encodedTitle}`
+    },
+    {
+      name: 'Reliance Digital',
+      priority: 3,
+      qualityBadge: 'Official Reliance Store',
+      priceFactor: 1.028,
+      pdpUrl: `https://www.reliancedigital.in/search?q=${encodedTitle}:relevance`
+    },
+    {
+      name: 'Snapdeal',
+      priority: 4,
+      qualityBadge: 'Budget Choice',
+      priceFactor: 0.95,
+      pdpUrl: `https://www.snapdeal.com/search?keyword=${encodedTitle}`
+    },
+    {
+      name: 'Meesho',
+      priority: 5,
+      qualityBadge: 'Wholesale Price',
+      priceFactor: 0.82, // ~18% lower
+      pdpUrl: `https://www.meesho.com/search?q=${encodedTitle}`
+    }
   ];
 
-  const offers = merchantDefs.map(m => {
+  // Map all candidate offers
+  const rawOffers = candidateDefs.map(m => {
     const price = Math.round(basePrice * m.priceFactor);
-    // Strictly validate PDP URL
     const validPdp = m.pdpUrl.startsWith('https://') ? m.pdpUrl : `https://${m.pdpUrl}`;
     return {
       name: m.name,
       merchantName: m.name,
+      priority: m.priority,
+      qualityBadge: m.qualityBadge,
       merchant_logo: getMerchantLogo(m.name),
       merchant_icon: getMerchantLogo(m.name),
       price: price,
       currentPrice: price,
       pdpUrl: validPdp,
       originalUrl: validPdp,
-      url: validPdp // Clean verified direct product landing page by default
+      url: validPdp
     };
   });
 
-  return offers.sort((a, b) => a.price - b.price);
+  const amazonOffer = rawOffers.find(o => o.name === 'Amazon');
+  const flipkartOffer = rawOffers.find(o => o.name === 'Flipkart');
+  const majorMinPrice = Math.min(
+    amazonOffer ? amazonOffer.price : Infinity,
+    flipkartOffer ? flipkartOffer.price : Infinity
+  );
+
+  // Show Meesho only if its price is significantly lower (>15% lower than Amazon/Flipkart) or when no major platform deals exist
+  const filteredOffers = rawOffers.filter(o => {
+    if (o.name === 'Meesho') {
+      if (!isFinite(majorMinPrice)) return true;
+      return o.price < (majorMinPrice * 0.85);
+    }
+    return true;
+  });
+
+  // Custom Ranking Algorithm:
+  // Priority 1 (Amazon) and Priority 2 (Flipkart & Myntra) rank first, followed by lower-priority merchants
+  filteredOffers.sort((a, b) => {
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority;
+    }
+    return a.price - b.price;
+  });
+
+  // Top 4-5 Store Deal Limit:
+  // Strictly limit to Top 4 to 5 deal options across verified merchants
+  const topStores = filteredOffers.slice(0, 5);
+
+  // Identify SINGLE BEST DEAL based on price & reliability (Amazon/Flipkart prioritized)
+  const minPriceInTop = Math.min(...topStores.map(s => s.price));
+  let recommendedName = topStores[0].name;
+
+  const amazonInTop = topStores.find(s => s.name === 'Amazon');
+  const flipkartInTop = topStores.find(s => s.name === 'Flipkart');
+
+  if (amazonInTop && amazonInTop.price <= minPriceInTop * 1.03) {
+    recommendedName = 'Amazon';
+  } else if (flipkartInTop && flipkartInTop.price <= minPriceInTop * 1.03) {
+    recommendedName = 'Flipkart';
+  } else {
+    const lowest = topStores.reduce((prev, curr) => curr.price < prev.price ? curr : prev);
+    recommendedName = lowest.name;
+  }
+
+  // Color-coded 'Buy Now' Buttons:
+  // Recommended Best Deal: Vivid Green (#2ECC71), "★ Best Value / App Recommended"
+  // Other Deals: Attractive Yellow / Amber (#F1C40F)
+  return topStores.map(store => {
+    const isRecommended = (store.name === recommendedName);
+    return {
+      ...store,
+      isRecommended: isRecommended,
+      recommendationBadge: isRecommended ? '★ Best Value / App Recommended' : store.qualityBadge,
+      buttonColor: isRecommended ? '#2ECC71' : '#F1C40F',
+      buttonTextColor: isRecommended ? '#FFFFFF' : '#131921'
+    };
+  });
 }
 
 // Convert via live Cuelinks Pub API v3 when CUELINKS_API_KEY is configured
-// Explicitly injects dynamic channel_id (process.env.CUELINKS_CHANNEL_ID || "328934")
+// Explicitly injects dynamic channel_id: process.env.CUELINKS_CHANNEL_ID || "328934"
 async function convertViaCuelinksApi(targetUrl) {
   if (!isLiveCuelinksApiConfigured()) {
     return null;
@@ -405,7 +520,7 @@ async function convertViaCuelinksApi(targetUrl) {
     if (affiliateUrl && typeof affiliateUrl === 'string' && affiliateUrl.startsWith('http')) {
       const lower = affiliateUrl.toLowerCase();
       // Ensure it is not an error string or unapproved channel warning
-      if (!lower.includes('unapproved') && !lower.includes('error') && !lower.includes('not_found')) {
+      if (!lower.includes('unapproved') && !lower.includes('error') && !lower.includes('not_found') && !lower.includes('channel')) {
         return affiliateUrl;
       }
     }
@@ -1050,19 +1165,17 @@ app.post(['/api/convert', '/api/cuelinks/convert'], async (req, res) => {
     });
   }
 
-  // 3. When no live API key is configured, wrap with strictly encoded publisher redirect
-  const publisherId = getCuelinksPublisherId();
-  const encodedUrl = encodeURIComponent(validUrl);
-  const fallbackAffiliateUrl = `https://linksredirect.com/?pub_id=${publisherId}&cid=${publisherId}&source=comparecart_server&url=${encodedUrl}`;
-
+  // 3. Graceful Direct Product URL Fallback (Never show linksredirect.com error screens)
   res.json({
     originalUrl: validUrl,
-    affiliateUrl: fallbackAffiliateUrl,
-    url: fallbackAffiliateUrl,
+    affiliateUrl: validUrl,
+    url: validUrl,
     merchant: merchant || 'E-Commerce',
-    isMonetized: true,
+    isMonetized: false,
     hasApiKey: false,
-    method: 'linksredirect_engine',
+    fallbackEngaged: true,
+    method: 'clean_direct_fallback',
+    message: 'Direct product page opened safely without error screen',
     timestamp: new Date().toISOString()
   });
 });

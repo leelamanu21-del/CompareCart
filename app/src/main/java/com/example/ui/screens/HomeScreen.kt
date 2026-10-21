@@ -619,11 +619,47 @@ fun AmazonStyleProductCard(
         NumberFormat.getCurrencyInstance(Locale("en", "IN")).apply { maximumFractionDigits = 0 }
     }
 
-    val merchantCalcs = product.merchantPrices.map { it to it.calculateEffectivePrice(activeBankNames) }
-    val bestPair = merchantCalcs.minByOrNull { it.second.netEffectivePrice } ?: merchantCalcs.first()
-    val bestMerchant = bestPair.first
-    val bestCalc = bestPair.second
-    val discountPct = (((product.mrp - bestMerchant.currentPrice) / product.mrp) * 100).toInt()
+    val sortedMerchants = remember(product.merchantPrices, activeBankNames) {
+        val pairs = product.merchantPrices.map { it to it.calculateEffectivePrice(activeBankNames) }
+        val amazonPrice = pairs.find { it.first.merchantName.contains("amazon", ignoreCase = true) }?.second?.netEffectivePrice
+        val flipkartPrice = pairs.find { it.first.merchantName.contains("flipkart", ignoreCase = true) }?.second?.netEffectivePrice
+        val majorMinPrice = when {
+            amazonPrice != null && flipkartPrice != null -> minOf(amazonPrice, flipkartPrice)
+            amazonPrice != null -> amazonPrice
+            flipkartPrice != null -> flipkartPrice
+            else -> Double.MAX_VALUE
+        }
+        val filtered = pairs.filter { (m, calc) ->
+            if (m.merchantName.contains("meesho", ignoreCase = true)) {
+                if (majorMinPrice == Double.MAX_VALUE) true else calc.netEffectivePrice < (majorMinPrice * 0.85)
+            } else true
+        }
+        filtered.sortedWith(
+            compareBy<Pair<MerchantPrice, com.example.data.model.EffectivePriceCalculation>> { (m, _) ->
+                val name = m.merchantName.lowercase()
+                when {
+                    name.contains("amazon") -> 1
+                    name.contains("flipkart") || name.contains("myntra") -> 2
+                    name.contains("snapdeal") -> 4
+                    name.contains("meesho") -> 5
+                    else -> 3
+                }
+            }.thenBy { it.second.netEffectivePrice }
+        )
+    }
+
+    val topStores = sortedMerchants.take(4)
+    val minPriceInTop = topStores.minOfOrNull { it.second.netEffectivePrice } ?: product.currentLowestPrice
+    val amazonInTop = topStores.find { it.first.merchantName.contains("amazon", ignoreCase = true) }
+    val flipkartInTop = topStores.find { it.first.merchantName.contains("flipkart", ignoreCase = true) }
+    val recommendedPair = when {
+        amazonInTop != null && amazonInTop.second.netEffectivePrice <= minPriceInTop * 1.03 -> amazonInTop
+        flipkartInTop != null && flipkartInTop.second.netEffectivePrice <= minPriceInTop * 1.03 -> flipkartInTop
+        else -> topStores.minByOrNull { it.second.netEffectivePrice } ?: sortedMerchants.firstOrNull()
+    }
+    val bestMerchant = recommendedPair?.first ?: product.merchantPrices.first()
+    val bestCalc = recommendedPair?.second ?: bestMerchant.calculateEffectivePrice(activeBankNames)
+    val discountPct = (((product.mrp - bestMerchant.currentPrice) / product.mrp) * 100).toInt().coerceAtLeast(0)
 
     Card(
         modifier = Modifier
@@ -797,15 +833,15 @@ fun AmazonStyleProductCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        product.merchantPrices.take(3).forEach { m ->
+                        topStores.forEach { (m, calc) ->
                             val isLowest = (m.id == bestMerchant.id)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -821,9 +857,9 @@ fun AmazonStyleProductCard(
                                         fontWeight = if (isLowest) FontWeight.Bold else FontWeight.Normal
                                     )
                                     Text(
-                                        text = currencyFormat.format(m.currentPrice),
+                                        text = currencyFormat.format(calc.netEffectivePrice),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (isLowest) AsliGreen else TextDark,
+                                        color = if (isLowest) RecommendedGreen else TextDark,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp
                                     )
@@ -832,18 +868,18 @@ fun AmazonStyleProductCard(
                         }
                     }
 
-                    // Amazon Yellow Action Button
+                    // Green Action Button for App Recommended Deal
                     Button(
                         onClick = { onQuickBuy(bestMerchant) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = AmazonYellow,
-                            contentColor = TextDark
+                            containerColor = RecommendedGreen,
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.testTag("quick_buy_button_${product.id}")
                     ) {
-                        Text("Compare & Buy", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("★ Best Deal", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }

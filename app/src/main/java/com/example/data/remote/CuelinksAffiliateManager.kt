@@ -141,18 +141,16 @@ object CuelinksAffiliateManager {
             "Not Set"
         }
 
-        // If no valid API key is set, format redirect via Cuelinks network publisher engine with strict URI encoding
+        // When no valid API key is set, fallback immediately to clean original URL (never show linksredirect error screens)
         if (apiKey.isBlank() || apiKey == "MY_CUELINKS_API_KEY") {
-            Log.d(TAG, "Using Cuelinks network redirect fallback with Publisher ID: $publisherId")
-            val encodedTarget = URLEncoder.encode(cleanedUrl, StandardCharsets.UTF_8.toString())
-            val smartAffiliateUrl = "https://linksredirect.com/?pub_id=$publisherId&cid=$publisherId&source=comparecart_app&url=$encodedTarget"
+            Log.d(TAG, "No live API key set. Gracefully returning clean original URL: $cleanedUrl")
             val latency = System.currentTimeMillis() - startTime
             return@withContext ConversionResult(
                 originalUrl = cleanedUrl,
-                finalUrl = smartAffiliateUrl,
-                isMonetized = true,
+                finalUrl = cleanedUrl,
+                isMonetized = false,
                 merchantName = merchantName,
-                message = "Cuelinks Network Redirect (Publisher ID: $publisherId)",
+                message = "Direct Clean URL (Offline Fallback)",
                 responseCode = 200,
                 latencyMs = latency,
                 maskedTokenUsed = "Default"
@@ -160,9 +158,10 @@ object CuelinksAffiliateManager {
         }
 
         try {
+            val channelId = if (BuildConfig.CUELINKS_CHANNEL_ID.isNotBlank()) BuildConfig.CUELINKS_CHANNEL_ID else "328934"
             val jsonPayload = JSONObject().apply {
                 put("url", cleanedUrl)
-                put("channel_id", "328934")
+                put("channel_id", channelId)
             }
 
             val request = Request.Builder()
